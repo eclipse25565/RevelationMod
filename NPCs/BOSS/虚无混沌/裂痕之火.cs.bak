@@ -64,7 +64,7 @@ namespace Revelation.NPCs.BOSS.虚无混沌
 		}
 
         [Obsolete]
-        public override void OnKill(int timeLeft)
+        public override void Kill(int timeLeft)
 		{
 		PlaySound(2, (int)Projectile.position.X, (int)Projectile.position.Y, 14);
 			Projectile.position.X = Projectile.position.X + (float)(Projectile.width / 4);
