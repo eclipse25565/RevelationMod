@@ -37,19 +37,37 @@ namespace Revelation.NPCs.Raider
             Music = RaiderHead.BackgroundMusic;
         }
 
-        public static void CommonAI(ModNPC body) {
-            if (!body.NPC.HasValidTarget)
+        private int head => (int)NPC.ai[0];
+        private NPC headNPC => Main.npc[head];
+
+        private int following => (int)NPC.ai[1];
+        private NPC followingNPC => Main.npc[following];
+
+        private bool isStage2
+        {
+            get
             {
-                body.NPC.TargetClosest();
+                return (int)NPC.ai[3] != 0;
+            }
+            set
+            {
+                NPC.ai[3] = value ? 1 : 0;
+            }
+        }
+
+        public override void AI()
+        {
+            if (!NPC.HasValidTarget)
+            {
+                NPC.TargetClosest();
             }
 
-            var head = (int)body.NPC.ai[0];
             bool shouldDespawn = false;
-            if (head > 0)
+            if (head > 0 && following > 0 && followingNPC.active)
             {
-                if (Main.npc[head].life > 0)
+                if (headNPC.active && headNPC.life > 0)
                 {
-                    body.NPC.realLife = head;
+                    NPC.realLife = head;
                 }
                 else
                 {
@@ -63,52 +81,48 @@ namespace Revelation.NPCs.Raider
 
             if (shouldDespawn)
             {
-                body.NPC.life = 0;
-                body.NPC.HitEffect();
-                body.NPC.active = false;
-                body.NPC.checkDead();
+                NPC.life = 0;
+                NPC.HitEffect();
+                NPC.active = false;
+                NPC.checkDead();
                 return;
             }
 
 
-            if ((int)body.NPC.ai[3] == 0 && (int)Main.npc[head].ai[3] != 0)
+            if (!isStage2 && (int)Main.npc[head].ai[3] != 0)
             {
-                body.NPC.defense += 15;
-                body.NPC.damage += 20;
-                body.NPC.ai[3] = 1;
-                body.NPC.netUpdate = true;
+                NPC.defense += 15;
+                NPC.damage += 20;
+                isStage2 = true;
+                NPC.netUpdate = true;
             }
 
-            if ((int)body.NPC.ai[3] != 0)
+            // 二阶段身体产生弹幕
+            if (isStage2 && (Main.expertMode || Main.masterMode))
             {
-                int probability = 100 + (int)Math.Log(Math.Max(body.NPC.life, 0.05), 1.00840819);
-                if(Main.netMode != NetmodeID.MultiplayerClient && body.NPC.HasValidTarget && Main.rand.NextBool(probability))
+                int probability = 100 + (int)Math.Log(Math.Max(NPC.life, 0.05), 1.00840819);
+                if (Main.netMode != NetmodeID.MultiplayerClient && NPC.HasValidTarget && Main.rand.NextBool(probability))
                 {
-                    var velocity = Vector2.Zero;//(target.Center - body.NPC.Center).SafeNormalize(Vector2.UnitX) * 5.5f;
-                    var projectile = Projectile.NewProjectile(body.NPC.GetSource_FromAI(), body.NPC.Center, 
+                    var velocity = Vector2.Zero;
+                    var projectile = Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center,
                         velocity, ModContent.ProjectileType<RaiderProjectile>(), 20, 0.0f);
                     Main.projectile[projectile].netUpdate = true;
                 }
             }
 
-            var last = Main.npc[(int)body.NPC.ai[1]];
-            var delta = last.Center - body.NPC.Center;
+            var delta = followingNPC.Center - NPC.Center;
             var dist = delta.Length();
             float speed;
-            if (dist >= (body.NPC.height + last.height) / 2)
+            if (dist >= (NPC.height + followingNPC.height) / 2)
             {
-                speed = last.velocity.Length();
+                speed = followingNPC.velocity.Length();
             }
             else
             {
-                speed = 0.0001f;
+                speed = 0.01f;
             }
-            body.NPC.velocity = speed * delta.SafeNormalize(Vector2.UnitX);
-            body.NPC.rotation = (float)Math.Atan2((double)body.NPC.velocity.Y, (double)body.NPC.velocity.X) + 1.57f;
-        }
-        public override void AI()
-        {
-            CommonAI(this);
+            NPC.velocity = speed * delta.SafeNormalize(Vector2.UnitX);
+            NPC.rotation = (float)Math.Atan2((double)NPC.velocity.Y, (double)NPC.velocity.X) + 1.57f;
         }
 
         public override bool? DrawHealthBar(byte hbPosition, ref float scale, ref Vector2 position)

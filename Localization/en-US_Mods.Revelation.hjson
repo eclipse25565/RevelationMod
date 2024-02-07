@@ -609,6 +609,11 @@ Buffs: {
 		DisplayName: 迷你鲨的恩赐
 		Description: Mods.Revelation.Buffs.迷你鲨的恩赐.Description
 	}
+
+	Blindness: {
+		DisplayName: Blindness
+		Description: Mods.Revelation.Buffs.Blindness.Description
+	}
 }
 
 Projectiles: {
@@ -624,6 +629,7 @@ Projectiles: {
 	迷你鲨子弹.DisplayName: 迷你鲨子弹
 	迷你鲨弹幕.DisplayName: 迷你鲨弹幕
 	裂痕之火.DisplayName: 裂痕之火
+	RaiderProjectile.DisplayName: Raider Projectile
 }
 
 NPCs: {

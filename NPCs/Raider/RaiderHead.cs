@@ -1,21 +1,12 @@
-﻿using Revelation.NPCs.BOSS.衰竭辐射;
+﻿using Revelation;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Terraria.Audio;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria;
 using Microsoft.Xna.Framework;
 using System.IO;
-using System.Runtime.Serialization.Formatters.Binary;
-using Terraria.GameContent.Animations;
-using ReLogic.Content;
-using Microsoft.Xna.Framework.Graphics;
-using Terraria.GameContent;
-using Terraria.GameContent.UI.BigProgressBar;
 using Terraria.GameContent.ItemDropRules;
 using Revelation.Items.生物掉落物.BOSS掉落物.衰竭辐射.袭击者;
 
@@ -30,12 +21,22 @@ namespace Revelation.NPCs.Raider
         public override string BossHeadTexture => "Revelation/NPCs/BOSS/衰竭辐射/袭击者_Head_Boss";
 
         public static int Life => Main.masterMode ? 25000 : Main.expertMode ? 22500 : 30000;
+        private static int Damage => 80;
 
         public static int WhenToStage2 => Main.masterMode ? 45000 : Main.expertMode ? 22500 : 10000;
 
         public static int BackgroundMusic => MusicLoader.GetMusicSlot("Revelation/Assets/Music/衰竭辐射boss战1");
 
-        private static int Damage => 80;
+        public bool IsStage2
+        {
+            get
+            {
+                return (int)NPC.ai[3] != 0;
+            }
+            set {
+                NPC.ai[3] = value ? 1 : 0; 
+            }
+        }
 
         public override void SetDefaults()
         {
@@ -129,11 +130,11 @@ namespace Revelation.NPCs.Raider
                     break;
             }
             NPC.rotation = (float)Math.Atan2((double)NPC.velocity.Y, (double)NPC.velocity.X) + 1.57f;
-            if(NPC.life < WhenToStage2 && (int)this.NPC.ai[3] == 0 && ai.counter == 0)
+            if(NPC.life < WhenToStage2 && !IsStage2 && ai.counter == 0)
             {
                 this.NPC.damage += 20;
                 this.NPC.defense += 5;
-                this.NPC.ai[3] = 1;
+                IsStage2 = true;
                 SoundEngine.PlaySound(SoundID.Roar, this.NPC.Center);
                 this.NPC.netUpdate = true;
             }
@@ -181,12 +182,12 @@ namespace Revelation.NPCs.Raider
                 var dot = normal.X * oldDirection.X + normal.Y * oldDirection.Y;
                 if (dot > -0.1f)
                 {
-                    var orbitDirection = (oldDirection.X * tangent.X + oldDirection.Y * tangent.Y) * tangent;
-                    orbitDirection = orbitDirection.SafeNormalize(Vector2.UnitX);
-                    var sign = Math.Sign(orbitDirection.Y * oldDirection.X - orbitDirection.X * oldDirection.Y);
+                    var orbitDirection = Vector2.Dot(oldDirection, tangent) * tangent.SafeNormalize(Vector2.UnitX);
 
-                    var omega = sign * Math.Min(0.01f + speed / dist, 0.0523f);
-                    omega *= 0.1f + Math.Min(dist / 500.0f * 0.9f, 0.9f);
+                    var omegaMax = Math.Min(0.01f + speed / dist, 0.0523f);
+                    var omega = Math.Clamp(oldDirection.AngleTo(orbitDirection), -omegaMax, omegaMax);
+
+                    omega *= 0.03f + Math.Clamp(0.0f, (dist - 100.0f) / 700.0f * 0.97f, 0.97f);
 
                     NPC.velocity = oldDirection.RotatedBy(omega) * speed;
                 }
@@ -293,9 +294,9 @@ namespace Revelation.NPCs.Raider
                 var speed = 14.0f;
                 var up = delta.SafeNormalize(Vector2.UnitY);
 
-                var sign = Math.Sign(up.Y * normalizedVelocity.X - up.X * normalizedVelocity.Y);
-
-                var omega = sign * (0.04f + speed / dist);
+                var angleTo = normalizedVelocity.AngleTo(up);
+                var omegaMax = 0.04f + speed / dist;
+                var omega = Math.Clamp(angleTo, -omegaMax, omegaMax);
 
                 NPC.velocity = (normalizedVelocity.RotatedBy(omega)) * speed;
             }
