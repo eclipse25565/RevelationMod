@@ -609,6 +609,11 @@ Buffs: {
 		DisplayName: 迷你鲨的恩赐
 		Description: Mods.Revelation.Buffs.迷你鲨的恩赐.Description
 	}
+
+	Blindness: {
+		DisplayName: Blindness
+		Description: You can't see anything!
+	}
 }
 
 Projectiles: {
@@ -624,6 +629,9 @@ Projectiles: {
 	迷你鲨子弹.DisplayName: 迷你鲨子弹
 	迷你鲨弹幕.DisplayName: 迷你鲨弹幕
 	裂痕之火.DisplayName: 裂痕之火
+	PoisonDart.DisplayName: Poison Dart
+	RadiationProjectile.DisplayName: Radiation
+	RadiationHealth.DisplayName: Radiation Health
 }
 
 NPCs: {
@@ -632,24 +640,19 @@ NPCs: {
 	迷你鲨NPC.DisplayName: 迷你鲨
 	无人机.DisplayName: 无人机
 	红械判定者.DisplayName: 红械判定者
-	袭击者.DisplayName: 袭击者
-	ExampleWormBody.DisplayName: Example Worm Body
-	ExampleWormTail.DisplayName: Example Worm Tail
-	破坏者.DisplayName: 破坏者
-	破坏者2.DisplayName: 破坏者2
-	破坏者3.DisplayName: 破坏者3
 	裂隙之眼.DisplayName: 裂隙之眼
 	裂隙之眼图标.DisplayName: 裂隙之眼图标
-	袭击者2体.DisplayName: 袭击者2体
-	袭击者2头.DisplayName: 袭击者2头
-	袭击者2尾.DisplayName: 袭击者2尾
-	RaiderBody.DisplayName: Raider Body
-	RaiderHead.DisplayName: Raider Head
-	RaiderTail.DisplayName: Raider Tail
-	RaideringDestroyerHead.DisplayName: Raidering Destroyer Head
-	RaideringDestroyerBody.DisplayName: Raidering Destroyer Body
-	RaideringDestroyerTail.DisplayName: Raidering Destroyer Tail
-	RaidingDestroyerHead.DisplayName: Raiding Destroyer Head
-	RaidingDestroyerBody.DisplayName: Raiding Destroyer Body
-	RaidingDestroyerTail.DisplayName: Raiding Destroyer Tail
+	RaiderBody.DisplayName: Raider
+	RaiderHead.DisplayName: Raider
+	RaiderTail.DisplayName: Raider
+	RaidingDestroyerHead.DisplayName: Destroyer
+	RaidingDestroyerBody.DisplayName: Destroyer
+	RaidingDestroyerTail.DisplayName: Destroyer
+	BugEgg.DisplayName: Bug Egg
+	CrusherHead.DisplayName: Crusher
+	CrusherBody.DisplayName: Crusher
+	CrusherTail.DisplayName: Crusher
+	DevourerHead.DisplayName: Devourer
+	DevourerBody.DisplayName: Devourer
+	DevourerTail.DisplayName: Devourer
 }

@@ -92,7 +92,7 @@ namespace Revelation.Menu
             //更新粒子
             for (int i = 0; i < Cinders.Count; i++)
             {
-                Cinders[i].Scale = Utils.GetLerpValue(Cinders[i].Lifetime, Cinders[i].Lifetime / 3, Cinders[i].Time, true);
+                Cinders[i].Scale = Terraria.Utils.GetLerpValue(Cinders[i].Lifetime, Cinders[i].Lifetime / 3, Cinders[i].Time, true);
                 Cinders[i].Scale *= MathHelper.Lerp(0.6f, 0.9f, Cinders[i].IdentityIndex % 6f / 6f);
                 if (Cinders[i].IdentityIndex % 13 == 12)
                     Cinders[i].Scale *= 2f;
@@ -101,7 +101,7 @@ namespace Revelation.Menu
                 Vector2 idealVelocity = -Vector2.UnitY.RotatedBy(MathHelper.Lerp(-0.44f, 0.44f, (float)Math.Sin(Cinders[i].Time / 16f + Cinders[i].IdentityIndex) * 0.5f + 0.5f));
                 idealVelocity = (idealVelocity + Vector2.UnitX).SafeNormalize(Vector2.UnitY) * flySpeed;
 
-                float movementInterpolant = MathHelper.Lerp(0.01f, 0.08f, Utils.GetLerpValue(45f, 145f, Cinders[i].Time, true));
+                float movementInterpolant = MathHelper.Lerp(0.01f, 0.08f, Terraria.Utils.GetLerpValue(45f, 145f, Cinders[i].Time, true));
                 Cinders[i].Velocity = Vector2.Lerp(Cinders[i].Velocity, idealVelocity, movementInterpolant);
 
                 Cinders[i].Time++;
