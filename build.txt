@@ -1,0 +1,3 @@
+displayName = 传说启示录 Revelation
+author = Tmod启示录开发团队.
+version = 0.18
