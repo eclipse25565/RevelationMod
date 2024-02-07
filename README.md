@@ -1,1 +1,2 @@
-这是一个自述文件
+# RevelationMod
+这是一个未完成的mod
