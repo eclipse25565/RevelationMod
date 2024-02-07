@@ -1,5 +1,5 @@
 ﻿using Revelation.NPCs.BOSS;
-using Revelation.NPCs.BOSS.衰竭辐射;
+using Revelation.NPCs.BOSS.Raider;
 using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
@@ -23,7 +23,7 @@ namespace Revelation.Items.特殊物品
         }
         public override bool CanUseItem(Player player)
         {
-            return !NPC.AnyNPCs(ModContent.NPCType<袭击者>());// && player.ZoneDirtLayerHeight;
+            return !NPC.AnyNPCs(ModContent.NPCType<RaiderHead>());// && player.ZoneDirtLayerHeight;
         }
         public override bool? UseItem(Player player)
         {
@@ -33,7 +33,7 @@ namespace Revelation.Items.特殊物品
                 var roar = new SoundStyle ("Revelation/Sound/BOSS音效/袭击者/袭击者叫声1");
                 roar.Volume = 0.9f;
                 SoundEngine . PlaySound(roar,player.position);
-                int type = ModContent.NPCType<袭击者>();
+                int type = ModContent.NPCType<RaiderHead>();
                     NPC.SpawnOnPlayer(player.whoAmI, type);//生成Boss
             }
             return true;
