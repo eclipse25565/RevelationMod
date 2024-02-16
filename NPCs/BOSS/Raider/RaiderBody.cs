@@ -35,12 +35,36 @@ namespace Revelation.NPCs.BOSS.Raider
         }
 
         private int Head => (int)NPC.ai[0];
-        private NPC HeadNPC => Main.npc[Head];
+        protected NPC HeadNPC => Main.npc[Head];
         private int HeadStage => (int)HeadNPC.ai[0];
+
+        private float PortalX
+        {
+            get => HeadNPC.ai[1];
+            set => HeadNPC.ai[1] = value;
+        }
+
+        private float PortalY
+        {
+            get => HeadNPC.ai[2];
+            set => HeadNPC.ai[2] = value;
+        }
+
+        protected float PortalDelta
+        {
+            get => HeadNPC.ai[3];
+            set => HeadNPC.ai[3] = value;
+        }
 
         private int Following => (int)NPC.ai[1];
         private NPC FollowingNPC => Main.npc[Following];
         private Player Target => Main.player[NPC.target];
+
+        protected bool EnteredPortal
+        {
+            get => (int)NPC.ai[2] != 0;
+            set => NPC.ai[2] = value ? 1 : 0;
+        }
 
         public override void AI()
         {
@@ -97,16 +121,49 @@ namespace Revelation.NPCs.BOSS.Raider
 
             var delta = FollowingNPC.Center - NPC.Center;
             var dist = delta.Length();
-            float speed;
-            if (dist >= (NPC.height + FollowingNPC.height) / 2)
+
+            if (PortalDelta != 0.0f && !EnteredPortal)
             {
-                speed = FollowingNPC.velocity.Length();
+                var portal = new Vector2(PortalX, PortalY);
+                var deltaToPortal = portal - NPC.Center;
+                var direction = NPC.velocity.SafeNormalize(Vector2.UnitX);
+                var directionToPortal = deltaToPortal.SafeNormalize(Vector2.UnitX);
+
+                if (deltaToPortal.Length() <= NPC.height / 2 && Vector2.Dot(direction, directionToPortal) > 0.2f)
+                {
+                    var angleToExit = PortalDelta % 8.0f;
+                    var distToExit = (PortalDelta - angleToExit) / 8.0f;
+                    angleToExit -= (float)Math.PI;
+
+                    var deltaToExit = Vector2.UnitX.RotatedBy(angleToExit) * distToExit;
+                    var expectedPos = portal + deltaToExit - deltaToPortal;
+                    NPC.Center = expectedPos;
+                    EnteredPortal = true;
+                    NPC.netUpdate = true;
+                }
+                else
+                {
+                    NPC.velocity = FollowingNPC.velocity.Length() * deltaToPortal.SafeNormalize(Vector2.UnitX);
+                }
             }
             else
             {
-                speed = 0.01f;
+                if(PortalDelta == 0.0f)
+                {
+                    EnteredPortal = false;
+                }
+
+                float speed;
+                if (dist >= (NPC.height + FollowingNPC.height) / 2)
+                {
+                    speed = FollowingNPC.velocity.Length();
+                }
+                else
+                {
+                    speed = 0.01f;
+                }
+                NPC.velocity = speed * delta.SafeNormalize(Vector2.UnitX);
             }
-            NPC.velocity = speed * delta.SafeNormalize(Vector2.UnitX);
             NPC.rotation = (float)Math.Atan2((double)NPC.velocity.Y, (double)NPC.velocity.X) + 1.57f;
         }
 

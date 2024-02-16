@@ -50,19 +50,41 @@ namespace Revelation.NPCs.BOSS.Raider
             set { NPC.ai[0] = value; NPC.netUpdate = true; }
         }
 
-        private enum AIStatus
+        private float PortalX
+        {
+            get => NPC.ai[1];
+            set => NPC.ai[1] = value;
+        }
+
+        private float PortalY
+        {
+            get => NPC.ai[2];
+            set => NPC.ai[2] = value;
+        }
+
+        private float PortalDelta
+        {
+            get => NPC.ai[3];
+            set => NPC.ai[3] = value;
+        }
+
+        private enum AIState
         {
             Spawned,
             Stretching,
             Enclosing,
             Spectating,
-            ZMoving
+            ZMoving,
+            PreparingRaiding,
+            Raiding,
+            ReturningToZMoving
         }
 
         private struct AIData
         {
-            public AIStatus status = AIStatus.Spawned;
+            public AIState state = AIState.Spawned;
             public ulong counter = 0;
+            public bool spawnedObject = false;
 
             public AIData()
             {
@@ -70,12 +92,16 @@ namespace Revelation.NPCs.BOSS.Raider
 
             public void Serialize(BinaryWriter writer)
             {
-                writer.Write((int)status);
+                writer.Write((int)state);
+                writer.Write(counter);
+                writer.Write(spawnedObject);
             }
 
             public void Serialize(BinaryReader reader)
             {
-                status = (AIStatus)reader.ReadInt32();
+                state = (AIState)reader.ReadInt32();
+                counter = reader.ReadUInt64();
+                spawnedObject = reader.ReadBoolean();
             }
         }
 
@@ -99,22 +125,31 @@ namespace Revelation.NPCs.BOSS.Raider
             }
 
             ++ai.counter;
-            switch(ai.status)
+            switch(ai.state)
             {
-                case AIStatus.Spawned:
+                case AIState.Spawned:
                     AI_Spawned();
                     break;
-                case AIStatus.Stretching:
+                case AIState.Stretching:
                     AI_Strecthing();
                     break;
-                case AIStatus.Enclosing:
+                case AIState.Enclosing:
                     AI_Enclosing();
                     break;
-                case AIStatus.Spectating:
+                case AIState.Spectating:
                     AI_Spectating();
                     break;
-                case AIStatus.ZMoving:
+                case AIState.ZMoving:
                     AI_ZMoving();
+                    break;
+                case AIState.PreparingRaiding:
+                    AI_PrepareRaiding();
+                    break;
+                case AIState.Raiding:
+                    AI_Raiding();
+                    break;
+                case AIState.ReturningToZMoving:
+                    AI_ReturningToZMoving();
                     break;
             }
 
@@ -127,7 +162,7 @@ namespace Revelation.NPCs.BOSS.Raider
         {
             Stage = 0;
             SpawnTail();
-            ai.status = AIStatus.Stretching;
+            ai.state = AIState.Stretching;
             TargetPlayer.AddBuff(BuffID.Darkness, 10 * 60);
         }
 
@@ -171,7 +206,7 @@ namespace Revelation.NPCs.BOSS.Raider
             else
             {
                 Stage = 1;
-                ai.status = AIStatus.Enclosing;
+                ai.state = AIState.Enclosing;
             }
         }
 
@@ -183,7 +218,7 @@ namespace Revelation.NPCs.BOSS.Raider
             {
                 SoundEngine.PlaySound(SoundID.Roar, NPC.Center);
                 Stage = 2;
-                ai.status = AIStatus.Spectating;
+                ai.state = AIState.Spectating;
                 NPC.Opacity = 0.2f;
                 AI_SpawnBrother();
                 NPC.netUpdate = true;
@@ -211,7 +246,7 @@ namespace Revelation.NPCs.BOSS.Raider
             if(crusher == 0 && devourer == 0)
             {
                 Stage = 3;
-                ai.status = AIStatus.ZMoving;
+                ai.state = AIState.ZMoving;
                 NPC.Opacity = 1.0f;
                 NPC.netUpdate = true;
             }
@@ -269,7 +304,96 @@ namespace Revelation.NPCs.BOSS.Raider
             var omega = Math.Clamp(direction.AngleTo(expectedDirection), -omegaMax, omegaMax);
             var speed = 20.0f;
 
+            if(ai.counter >= 240)
+            {
+                ai.state = AIState.PreparingRaiding;
+                ai.counter = 0;
+            }
+
             NPC.velocity = direction.RotatedBy(omega) * speed;
+        }
+
+        private void AI_PrepareRaiding()
+        {
+            var expectedDiretion = -Vector2.UnitY;
+            var direction = NPC.velocity.SafeNormalize(Vector2.UnitX);
+            if(Vector2.Dot(direction, expectedDiretion) < 0.99f)
+            {
+                var speed = 20.0f;
+                var omega = Math.Clamp(direction.AngleTo(expectedDiretion), -0.05f, 0.05f);
+                NPC.velocity = direction.RotatedBy(omega) * speed;
+            }
+            else
+            {
+                var center = NPC.Center;
+                PortalX = center.X;
+                PortalY = center.Y;
+                var expectedPos = TargetPlayer.Center;
+                expectedPos.Y += 700.0f;
+                var delta = expectedPos - center;
+                var dist = delta.Length();
+
+                // pack the delta
+                var angle = Math.Atan2(delta.Y, delta.X) + Math.PI;
+                PortalDelta = (float)Math.Floor(dist) * 8.0f + (float)angle;
+                
+                NPC.Center = expectedPos;
+
+                ai.counter = 0;
+                ai.state = AIState.Raiding;
+                NPC.netUpdate = true;
+            }
+        }
+
+        private void AI_Raiding()
+        {
+            var delta = TargetPlayer.Center - NPC.Center;
+            var direction = NPC.velocity.SafeNormalize(Vector2.UnitX);
+            var expectedDirection = delta.SafeNormalize(Vector2.UnitX);
+            var dist = delta.Length();
+            var dot = Vector2.Dot(direction, expectedDirection);
+            var speed = 20.0f;
+            var omegaMax = 0.09f;
+            if (dot > 0.2f)
+            {
+                if (dist > 100.0f)
+                {
+                    var omega = Math.Clamp(direction.AngleTo(expectedDirection), -omegaMax, omegaMax);
+                    NPC.velocity = direction.RotatedBy(omega) * speed;
+                }
+                else if(!ai.spawnedObject)
+                {
+                    ai.spawnedObject = true;
+                    if(Main.netMode != NetmodeID.MultiplayerClient)
+                    {
+                        foreach (var i in Enumerable.Range(0, Main.rand.Next(7, 15)))
+                        {
+                            var diffuse = Main.rand.NextVector2Circular(192.0f, 192.0f);
+                            var projectile = Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center + diffuse, Vector2.Zero,
+                                ModContent.ProjectileType<RadiationProjectile>(), Damage, 0.0f);
+                            Main.projectile[projectile].netUpdate = true;
+                        }
+                    }
+                    NPC.netUpdate = true;
+                }
+            }
+            else
+            {
+                ai.counter = 0;
+                ai.spawnedObject = false;
+                ai.state = AIState.ReturningToZMoving;
+            }
+        }
+
+        private void AI_ReturningToZMoving()
+        {
+            var delta = TargetPlayer.Center - NPC.Center;
+            var dist = delta.Length();
+            if(dist > 600.0f)
+            {
+                ai.counter = 0;
+                ai.state = AIState.ZMoving;
+            }
         }
 
         public override void ModifyNPCLoot(NPCLoot npcLoot)

@@ -15,5 +15,15 @@ namespace Revelation.NPCs.BOSS.Raider
             NPC.height = 36;
             NPC.scale = 2.0f;
         }
+
+        public override void AI()
+        {
+            base.AI();
+            if(EnteredPortal)
+            {
+                PortalDelta = 0.0f;
+                HeadNPC.netUpdate = true;
+            }
+        }
     }
 }

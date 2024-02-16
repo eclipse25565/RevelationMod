@@ -631,6 +631,7 @@ Projectiles: {
 	裂痕之火.DisplayName: 裂痕之火
 	RaiderProjectile.DisplayName: Raider Projectile
 	PoisonDart.DisplayName: Poison Dart
+	RadiationProjectile.DisplayName: Radiation Projectile
 }
 
 NPCs: {
