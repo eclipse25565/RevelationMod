@@ -55,7 +55,8 @@ namespace Revelation.NPCs.BOSS.Raider
             Spawned,
             Stretching,
             Enclosing,
-            Spectating
+            Spectating,
+            ZMoving
         }
 
         private struct AIData
@@ -111,6 +112,9 @@ namespace Revelation.NPCs.BOSS.Raider
                     break;
                 case AIStatus.Spectating:
                     AI_Spectating();
+                    break;
+                case AIStatus.ZMoving:
+                    AI_ZMoving();
                     break;
             }
 
@@ -207,10 +211,8 @@ namespace Revelation.NPCs.BOSS.Raider
             if(crusher == 0 && devourer == 0)
             {
                 Stage = 3;
-                // TODO: Stage 3
-                NPC.life = 0;
-                NPC.checkDead();
-                NPC.active = false;
+                ai.status = AIStatus.ZMoving;
+                NPC.Opacity = 1.0f;
                 NPC.netUpdate = true;
             }
             else
@@ -242,6 +244,30 @@ namespace Revelation.NPCs.BOSS.Raider
             var factor = Math.Clamp((r - dist) / r, -1.0f, 1.0f);
             var expectedDirection = factor * up + (1 - Math.Abs(factor)) * directionOnCircle;
             var omega = Math.Clamp(direction.AngleTo(expectedDirection), -omegaMax, omegaMax);
+
+            NPC.velocity = direction.RotatedBy(omega) * speed;
+        }
+
+        private void AI_ZMoving()
+        {
+            var delta = TargetPlayer.Center - NPC.Center;
+            var dist = delta.Length();
+
+            var up = -delta.SafeNormalize(Vector2.UnitX);
+            var left = new Vector2(-up.Y, up.X);
+            var direction = NPC.velocity.SafeNormalize(Vector2.UnitX);
+            var tangent = (Vector2.Dot(direction, left) * left).SafeNormalize(Vector2.UnitX);
+
+            var orbit = 800.0f;
+            var angle = (tangent.Y * up.X - tangent.X * up.Y) * (Math.PI / 2 - 0.02f);
+            if(dist < orbit)
+            {
+                angle = -angle;
+            }
+            var expectedDirection = tangent.RotatedBy(angle);
+            var omegaMax = 0.06f;
+            var omega = Math.Clamp(direction.AngleTo(expectedDirection), -omegaMax, omegaMax);
+            var speed = 20.0f;
 
             NPC.velocity = direction.RotatedBy(omega) * speed;
         }

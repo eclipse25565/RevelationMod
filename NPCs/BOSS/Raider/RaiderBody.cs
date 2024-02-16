@@ -90,6 +90,10 @@ namespace Revelation.NPCs.BOSS.Raider
             {
                 NPC.Opacity = 0.2f;
             }
+            else if(HeadStage == 3)
+            {
+                NPC.Opacity = 1.0f;
+            }
 
             var delta = FollowingNPC.Center - NPC.Center;
             var dist = delta.Length();
