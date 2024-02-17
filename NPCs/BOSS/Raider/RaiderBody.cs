@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using System.Linq;
 using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
@@ -11,8 +12,8 @@ namespace Revelation.NPCs.BOSS.Raider
     {
         public static readonly SoundStyle SoundShoot = new SoundStyle("Revelation/NPCs/BOSS/Raider/Shoot");
 
-        protected virtual int Damage => 40;
-        protected virtual int Defense => 0;
+        protected virtual int Damage => 28;
+        protected virtual int Defense => 2;
 
         public override void SetDefaults()
         {
@@ -35,12 +36,42 @@ namespace Revelation.NPCs.BOSS.Raider
         }
 
         private int Head => (int)NPC.ai[0];
-        private NPC HeadNPC => Main.npc[Head];
+        protected NPC HeadNPC => Main.npc[Head];
         private int HeadStage => (int)HeadNPC.ai[0];
 
-        private int Following => (int)NPC.ai[1];
+        private float PortalX
+        {
+            get => HeadNPC.ai[1];
+            set => HeadNPC.ai[1] = value;
+        }
+
+        private float PortalY
+        {
+            get => HeadNPC.ai[2];
+            set => HeadNPC.ai[2] = value;
+        }
+
+        protected float PortalDelta
+        {
+            get => HeadNPC.ai[3];
+            set => HeadNPC.ai[3] = value;
+        }
+
+        private int Following
+        {
+            get => (int)NPC.ai[1];
+            set => NPC.ai[1] = value;
+        }
         private NPC FollowingNPC => Main.npc[Following];
         private Player Target => Main.player[NPC.target];
+
+        protected bool EnteredPortal
+        {
+            get => (int)NPC.ai[2] != 0;
+            set => NPC.ai[2] = value ? 1 : 0;
+        }
+
+        private bool FollowingEnteredPortal => FollowingNPC.ai[2] != 0;
 
         public override void AI()
         {
@@ -50,16 +81,14 @@ namespace Revelation.NPCs.BOSS.Raider
             }
 
             bool shouldDespawn = false;
-            if (Head > 0 && Following > 0 && FollowingNPC.active)
+            if(Head > 0 && HeadNPC.active && HeadStage == 5)
             {
-                if (HeadNPC.active && HeadNPC.life > 0)
-                {
-                    NPC.realLife = Head;
-                }
-                else
-                {
-                    shouldDespawn = true;
-                }
+                Following = Head;
+            }
+
+            if (Head > 0 && Following > 0 && FollowingNPC.active && HeadNPC.active)
+            {
+                NPC.realLife = Head;
             }
             else
             {
@@ -89,20 +118,76 @@ namespace Revelation.NPCs.BOSS.Raider
             else if(HeadStage == 2)
             {
                 NPC.Opacity = 0.2f;
+                NPC.dontTakeDamage = true;
+            }
+            else if(HeadStage == 3)
+            {
+                NPC.Opacity = 1.0f;
+                NPC.dontTakeDamage = false;
+                if (Main.rand.NextBool(15000))
+                {
+                    foreach (var i in Enumerable.Range(0, 3))
+                    {
+                        AI_SpawnEgg();
+                    }
+                }
+            }
+            else if(HeadStage == 5)
+            {
+                NPC.dontTakeDamage = true;
             }
 
             var delta = FollowingNPC.Center - NPC.Center;
             var dist = delta.Length();
-            float speed;
-            if (dist >= (NPC.height + FollowingNPC.height) / 2)
+
+            bool toFollow = true;
+
+            if (PortalDelta != 0.0f && !EnteredPortal)
             {
-                speed = FollowingNPC.velocity.Length();
+                var portal = new Vector2(PortalX, PortalY);
+                var deltaToPortal = portal - NPC.Center;
+                var direction = NPC.velocity.SafeNormalize(Vector2.UnitX);
+                var directionToPortal = deltaToPortal.SafeNormalize(Vector2.UnitX);
+
+                if (deltaToPortal.Length() <= NPC.height / 2 &&
+                Vector2.Dot(direction, directionToPortal) > 0.2f)
+                {
+                    var angleToExit = PortalDelta % 8.0f;
+                    var distToExit = (PortalDelta - angleToExit) / 8.0f;
+                    angleToExit -= (float)Math.PI;
+
+                    var deltaToExit = Vector2.UnitX.RotatedBy(angleToExit) * distToExit;
+                    var expectedPos = portal + deltaToExit - deltaToPortal;
+                    NPC.Center = expectedPos;
+                    EnteredPortal = true;
+                    NPC.netUpdate = true;
+                }
+                else if(FollowingNPC.type == ModContent.NPCType<RaiderHead>() || FollowingEnteredPortal)
+                {
+                    NPC.velocity = FollowingNPC.velocity.Length() * deltaToPortal.SafeNormalize(Vector2.UnitX);
+                    toFollow = false;
+                }
             }
-            else
+
+            if(toFollow)
             {
-                speed = 0.01f;
+                if(PortalDelta == 0.0f)
+                {
+                    EnteredPortal = false;
+                    NPC.netUpdate = true;
+                }
+
+                float speed;
+                if (dist >= (NPC.height + FollowingNPC.height) / 2)
+                {
+                    speed = FollowingNPC.velocity.Length();
+                }
+                else
+                {
+                    speed = 0.01f;
+                }
+                NPC.velocity = speed * delta.SafeNormalize(Vector2.UnitX);
             }
-            NPC.velocity = speed * delta.SafeNormalize(Vector2.UnitX);
             NPC.rotation = (float)Math.Atan2((double)NPC.velocity.Y, (double)NPC.velocity.X) + 1.57f;
         }
 
@@ -136,29 +221,35 @@ namespace Revelation.NPCs.BOSS.Raider
             }
         }
 
-        public override void ModifyIncomingHit(ref NPC.HitModifiers modifiers)
-        {
-            if(HeadStage == 2)
-            {
-                modifiers.SetMaxDamage(0);
-            }
-            else if (Vector2.Distance(FollowingNPC.Center, NPC.Center) < NPC.height / 6.0f)
-            {
-                modifiers.SetMaxDamage(1);
-            }
-        }
-
         public override bool CanHitPlayer(Player target, ref int cooldownSlot)
         {
-            if(HeadStage == 2)
+            if(HeadStage == 2 || HeadStage == 5)
             {
                 return false;
             }
             return base.CanHitPlayer(target, ref cooldownSlot);
         }
 
+        public override void ModifyIncomingHit(ref NPC.HitModifiers modifiers)
+        {
+            modifiers.SetMaxDamage(NPC.life - 1);
+            if (Vector2.Distance(FollowingNPC.Center, NPC.Center) < NPC.height / 6.0f)
+            {
+                modifiers.SetMaxDamage(1);
+            }
+        }
+
         public override bool? DrawHealthBar(byte hbPosition, ref float scale, ref Vector2 position)
         {
+            return false;
+        }
+
+        public override bool CheckDead()
+        {
+            NPC.life = 1;
+            NPC.dontTakeDamage = true;
+            NPC.active = true;
+            NPC.netUpdate = true;
             return false;
         }
     }

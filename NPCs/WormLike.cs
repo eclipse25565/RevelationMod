@@ -100,15 +100,9 @@ namespace Revelation.NPCs
             }
 
             var delta = FollowingNPC.Center - NPC.Center;
-            float speed;
-            if(delta.Length() >= (NPC.height + FollowingNPC.height) * 0.5f)
-            {
-                speed = FollowingNPC.velocity.Length();
-            }
-            else
-            {
-                speed = 0.01f;
-            }
+            var dist = delta.Length();
+            var expectedDist = (NPC.height + FollowingNPC.height) * 0.5f;
+            float speed = Math.Clamp(dist - expectedDist, 0.0f, FollowingNPC.velocity.Length());
             NPC.velocity = delta.SafeNormalize(Vector2.UnitX) * speed;
             UpdateRotation();
         }

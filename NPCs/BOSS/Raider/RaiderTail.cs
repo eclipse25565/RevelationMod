@@ -5,8 +5,8 @@ namespace Revelation.NPCs.BOSS.Raider
 {
     internal class RaiderTail : RaiderBody
     {
-        protected override int Damage => 40;
-        protected override int Defense => 3;
+        protected override int Damage => 24;
+        protected override int Defense => 0;
 
         public override void SetDefaults()
         {
@@ -14,6 +14,16 @@ namespace Revelation.NPCs.BOSS.Raider
             NPC.width = 32;
             NPC.height = 36;
             NPC.scale = 2.0f;
+        }
+
+        public override void AI()
+        {
+            base.AI();
+            if(EnteredPortal)
+            {
+                PortalDelta = 0.0f;
+                HeadNPC.netUpdate = true;
+            }
         }
     }
 }

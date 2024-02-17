@@ -8,8 +8,8 @@ namespace Revelation.NPCs.BOSS.Raider
 {
     internal class CrusherHead : WormLikeHead
     {
-        private static int Life => 20000;
-        private static int Damage => 170;
+        private static int Life => Main.masterMode ? 3000 : Main.expertMode ? 2500 : 3000;
+        private static int Damage => 40;
 
         protected override int BodyType => ModContent.NPCType<CrusherBody>();
         private class CrusherBody : WormLikeBody
@@ -19,9 +19,9 @@ namespace Revelation.NPCs.BOSS.Raider
                 NPC.aiStyle = -1;
                 NPC.width = 32;
                 NPC.height = 28;
-                NPC.damage = 10;
+                NPC.damage = (int)(Damage * 0.7f);
                 NPC.lifeMax = Life;
-                NPC.defense = 50;
+                NPC.defense = 8;
                 NPC.knockBackResist = 0f;
                 NPC.DeathSound = SoundID.NPCDeath1;
                 NPC.HitSound = SoundID.NPCHit1;
@@ -42,9 +42,9 @@ namespace Revelation.NPCs.BOSS.Raider
                 NPC.aiStyle = -1;
                 NPC.width = 32;
                 NPC.height = 28;
-                NPC.damage = Damage;
+                NPC.damage = (int)(Damage * 0.7f);
                 NPC.lifeMax = Life;
-                NPC.defense = 10;
+                NPC.defense = 4;
                 NPC.knockBackResist = 0f;
                 NPC.DeathSound = SoundID.NPCDeath1;
                 NPC.HitSound = SoundID.NPCHit1;
@@ -64,7 +64,7 @@ namespace Revelation.NPCs.BOSS.Raider
             NPC.height = 28;
             NPC.damage = Damage;
             NPC.lifeMax = Life;
-            NPC.defense = 50;
+            NPC.defense = 14;
             NPC.knockBackResist = 0f;
             NPC.DeathSound = SoundID.NPCDeath1;
             NPC.HitSound = SoundID.NPCHit1;
@@ -90,7 +90,7 @@ namespace Revelation.NPCs.BOSS.Raider
         }
 
         private const float acceleration = 4.0f;
-        private const float accelerationBrake = 0.3f;
+        private const float accelerationBrake = 0.7f;
         private const float maxSpeed = 35.0f;
         private const float minSpeed = 3.0f;
         private float speed = minSpeed;
@@ -121,7 +121,8 @@ namespace Revelation.NPCs.BOSS.Raider
                 }
                 else
                 {
-                    var omega = speed / 48.0f;
+                    var omegaMax = speed / 64.0f;
+                    var omega = Math.Clamp(direction.AngleTo(targetDirection), -omegaMax, omegaMax);
                     NPC.velocity = direction.RotatedBy(omega) * speed;
                 }
             }
@@ -132,7 +133,7 @@ namespace Revelation.NPCs.BOSS.Raider
                 {
                     speed = Math.Clamp(speed + acceleration, minSpeed, maxSpeed);
                 }
-                else if (dot > -0.92f && dist > 384.0f)
+                else if (dot > -0.92f && dist > 256.0f)
                 {
                     speed = Math.Clamp(speed - accelerationBrake, minSpeed, maxSpeed);
                 }
