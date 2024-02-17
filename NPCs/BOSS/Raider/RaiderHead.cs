@@ -379,9 +379,9 @@ namespace Revelation.NPCs.BOSS.Raider
                     {
                         foreach (var i in Enumerable.Range(0, Main.rand.Next(7, 15)))
                         {
-                            var diffuse = Main.rand.NextVector2Circular(192.0f, 192.0f);
+                            var diffuse = Main.rand.NextVector2Circular(368.0f, 368.0f);
                             var projectile = Projectile.NewProjectileDirect(NPC.GetSource_FromAI(), NPC.Center + diffuse, Vector2.Zero,
-                                ModContent.ProjectileType<RadiationProjectile>(), Damage, 0.0f, -1, NPC.whoAmI);
+                                ModContent.ProjectileType<RadiationProjectile>(), Damage / 3, 0.0f, -1, NPC.whoAmI);
                             projectile.netUpdate = true;
                         }
                     }

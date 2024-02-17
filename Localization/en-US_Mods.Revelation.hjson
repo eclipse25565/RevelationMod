@@ -632,6 +632,7 @@ Projectiles: {
 	RaiderProjectile.DisplayName: Raider Projectile
 	PoisonDart.DisplayName: Poison Dart
 	RadiationProjectile.DisplayName: Radiation Projectile
+	RadiationHealth.DisplayName: Radiation Health
 }
 
 NPCs: {

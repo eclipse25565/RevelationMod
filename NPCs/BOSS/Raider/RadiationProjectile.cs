@@ -12,8 +12,6 @@ namespace Revelation.NPCs.BOSS.Raider
 {
     internal class RadiationProjectile : ModProjectile
     {
-        public override string Texture => "Revelation/NPCs/BOSS/Raider/RadiationProjectile";
-
         public override void SetStaticDefaults()
         {
             Main.projFrames[Projectile.type] = 3;
@@ -37,9 +35,13 @@ namespace Revelation.NPCs.BOSS.Raider
             Lighting.AddLight(this.Projectile.Center, new Vector3(0.1f, 0.9f, 0.1f) * this.Projectile.Opacity);
         }
 
+        private int Owner => (int)Projectile.ai[0];
+
         public override void OnHitPlayer(Player target, Player.HurtInfo info)
         {
             target.AddBuff(ModContent.BuffType<致死辐射>(), 420);
+            Projectile.NewProjectileDirect(Projectile.GetSource_FromAI(), Projectile.Center, Vector2.Zero,
+                ModContent.ProjectileType<RadiationHealth>(), 0, 0.0f, -1, Owner).netUpdate = true;
         }
     }
 }
