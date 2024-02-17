@@ -207,14 +207,28 @@ namespace Revelation.NPCs.BOSS.Raider
 
         public override void ModifyIncomingHit(ref NPC.HitModifiers modifiers)
         {
-            if(HeadStage == 2)
-            {
-                modifiers.SetMaxDamage(0);
-            }
-            else if (Vector2.Distance(FollowingNPC.Center, NPC.Center) < NPC.height / 6.0f)
+            if (Vector2.Distance(FollowingNPC.Center, NPC.Center) < NPC.height / 6.0f)
             {
                 modifiers.SetMaxDamage(1);
             }
+        }
+
+        public override bool? CanBeHitByItem(Player player, Item item)
+        {
+            if(HeadStage == 2)
+            {
+                return false;
+            }
+            return base.CanBeHitByItem(player, item);
+        }
+
+        public override bool? CanBeHitByProjectile(Projectile projectile)
+        {
+            if (HeadStage == 2)
+            {
+                return false;
+            }
+            return base.CanBeHitByProjectile(projectile);
         }
 
         public override bool CanHitPlayer(Player target, ref int cooldownSlot)

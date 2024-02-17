@@ -11,6 +11,7 @@ using Terraria.GameContent.ItemDropRules;
 using Revelation.Items.生物掉落物.BOSS掉落物.衰竭辐射.袭击者;
 using Steamworks;
 using Terraria.GameContent;
+using System.Xml;
 
 namespace Revelation.NPCs.BOSS.Raider
 {
@@ -432,6 +433,24 @@ namespace Revelation.NPCs.BOSS.Raider
                 return false;
             }
             return base.CanHitPlayer(target, ref cooldownSlot);
+        }
+
+        public override bool? CanBeHitByItem(Player player, Item item)
+        {
+            if (Stage == 2)
+            {
+                return false;
+            }
+            return base.CanBeHitByItem(player, item);
+        }
+
+        public override bool? CanBeHitByProjectile(Projectile projectile)
+        {
+            if (Stage == 2)
+            {
+                return false;
+            }
+            return base.CanBeHitByProjectile(projectile);
         }
     }
 }
