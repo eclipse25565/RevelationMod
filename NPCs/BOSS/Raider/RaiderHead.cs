@@ -164,6 +164,7 @@ namespace Revelation.NPCs.BOSS.Raider
             SpawnTail();
             ai.state = AIState.Stretching;
             TargetPlayer.AddBuff(BuffID.Darkness, 10 * 60);
+            NPC.netUpdate = true;
         }
 
         private void SpawnTail()
@@ -207,6 +208,7 @@ namespace Revelation.NPCs.BOSS.Raider
             {
                 Stage = 1;
                 ai.state = AIState.Enclosing;
+                NPC.netUpdate = true;
             }
         }
 
@@ -308,6 +310,7 @@ namespace Revelation.NPCs.BOSS.Raider
             {
                 ai.state = AIState.PreparingRaiding;
                 ai.counter = 0;
+                NPC.netUpdate = true;
             }
 
             NPC.velocity = direction.RotatedBy(omega) * speed;
@@ -315,6 +318,13 @@ namespace Revelation.NPCs.BOSS.Raider
 
         private void AI_PrepareRaiding()
         {
+            if(PortalDelta != 0.0f)
+            {
+                ai.state = AIState.ZMoving;
+                ai.counter = 0;
+                NPC.netUpdate = true;
+                return;
+            }
             var expectedDiretion = -Vector2.UnitY;
             var direction = NPC.velocity.SafeNormalize(Vector2.UnitX);
             if(Vector2.Dot(direction, expectedDiretion) < 0.99f)
@@ -369,9 +379,9 @@ namespace Revelation.NPCs.BOSS.Raider
                         foreach (var i in Enumerable.Range(0, Main.rand.Next(7, 15)))
                         {
                             var diffuse = Main.rand.NextVector2Circular(192.0f, 192.0f);
-                            var projectile = Projectile.NewProjectile(NPC.GetSource_FromAI(), NPC.Center + diffuse, Vector2.Zero,
-                                ModContent.ProjectileType<RadiationProjectile>(), Damage, 0.0f);
-                            Main.projectile[projectile].netUpdate = true;
+                            var projectile = Projectile.NewProjectileDirect(NPC.GetSource_FromAI(), NPC.Center + diffuse, Vector2.Zero,
+                                ModContent.ProjectileType<RadiationProjectile>(), Damage, 0.0f, -1, NPC.whoAmI);
+                            projectile.netUpdate = true;
                         }
                     }
                     NPC.netUpdate = true;
@@ -382,6 +392,7 @@ namespace Revelation.NPCs.BOSS.Raider
                 ai.counter = 0;
                 ai.spawnedObject = false;
                 ai.state = AIState.ReturningToZMoving;
+                NPC.netUpdate = true;
             }
         }
 
@@ -393,6 +404,7 @@ namespace Revelation.NPCs.BOSS.Raider
             {
                 ai.counter = 0;
                 ai.state = AIState.ZMoving;
+                NPC.netUpdate = true;
             }
         }
 

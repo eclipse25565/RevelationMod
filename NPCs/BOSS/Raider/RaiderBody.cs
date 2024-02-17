@@ -66,6 +66,8 @@ namespace Revelation.NPCs.BOSS.Raider
             set => NPC.ai[2] = value ? 1 : 0;
         }
 
+        private bool FollowingEnteredPortal => FollowingNPC.ai[2] != 0;
+
         public override void AI()
         {
             if (!NPC.HasValidTarget)
@@ -122,6 +124,8 @@ namespace Revelation.NPCs.BOSS.Raider
             var delta = FollowingNPC.Center - NPC.Center;
             var dist = delta.Length();
 
+            bool toFollow = true;
+
             if (PortalDelta != 0.0f && !EnteredPortal)
             {
                 var portal = new Vector2(PortalX, PortalY);
@@ -129,7 +133,8 @@ namespace Revelation.NPCs.BOSS.Raider
                 var direction = NPC.velocity.SafeNormalize(Vector2.UnitX);
                 var directionToPortal = deltaToPortal.SafeNormalize(Vector2.UnitX);
 
-                if (deltaToPortal.Length() <= NPC.height / 2 && Vector2.Dot(direction, directionToPortal) > 0.2f)
+                if (deltaToPortal.Length() <= NPC.height / 2 &&
+                Vector2.Dot(direction, directionToPortal) > 0.2f)
                 {
                     var angleToExit = PortalDelta % 8.0f;
                     var distToExit = (PortalDelta - angleToExit) / 8.0f;
@@ -141,16 +146,19 @@ namespace Revelation.NPCs.BOSS.Raider
                     EnteredPortal = true;
                     NPC.netUpdate = true;
                 }
-                else
+                else if(FollowingNPC.type == ModContent.NPCType<RaiderHead>() || FollowingEnteredPortal)
                 {
                     NPC.velocity = FollowingNPC.velocity.Length() * deltaToPortal.SafeNormalize(Vector2.UnitX);
+                    toFollow = false;
                 }
             }
-            else
+
+            if(toFollow)
             {
                 if(PortalDelta == 0.0f)
                 {
                     EnteredPortal = false;
+                    NPC.netUpdate = true;
                 }
 
                 float speed;
