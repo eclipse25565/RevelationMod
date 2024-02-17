@@ -14,6 +14,10 @@ namespace Revelation.NPCs.BOSS.Raider
             Main.npcFrameCount[ModContent.NPCType<BugEgg>()] = 7;
         }
 
+        private static int Life => 100;
+        private static int Damage => 20;
+
+        // 孵化时间
         private int life = 900;
 
         public override void SetDefaults()
@@ -22,8 +26,8 @@ namespace Revelation.NPCs.BOSS.Raider
             NPC.width = 26;
             NPC.height = 32;
             NPC.scale = 2.0f;
-            NPC.lifeMax = 800;
-            NPC.damage = 40;
+            NPC.lifeMax = Life;
+            NPC.damage = Damage;
             NPC.DeathSound = SoundID.NPCDeath1;
             NPC.HitSound = SoundID.NPCHit1;
             NPC.npcSlots = 0.8f;

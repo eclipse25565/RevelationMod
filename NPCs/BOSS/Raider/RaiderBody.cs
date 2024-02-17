@@ -12,8 +12,8 @@ namespace Revelation.NPCs.BOSS.Raider
     {
         public static readonly SoundStyle SoundShoot = new SoundStyle("Revelation/NPCs/BOSS/Raider/Shoot");
 
-        protected virtual int Damage => 40;
-        protected virtual int Defense => 0;
+        protected virtual int Damage => 28;
+        protected virtual int Defense => 2;
 
         public override void SetDefaults()
         {
@@ -57,7 +57,11 @@ namespace Revelation.NPCs.BOSS.Raider
             set => HeadNPC.ai[3] = value;
         }
 
-        private int Following => (int)NPC.ai[1];
+        private int Following
+        {
+            get => (int)NPC.ai[1];
+            set => NPC.ai[1] = value;
+        }
         private NPC FollowingNPC => Main.npc[Following];
         private Player Target => Main.player[NPC.target];
 
@@ -77,16 +81,14 @@ namespace Revelation.NPCs.BOSS.Raider
             }
 
             bool shouldDespawn = false;
-            if (Head > 0 && Following > 0 && FollowingNPC.active)
+            if(Head > 0 && HeadNPC.active && HeadStage == 5)
             {
-                if (HeadNPC.active && HeadNPC.life > 0)
-                {
-                    NPC.realLife = Head;
-                }
-                else
-                {
-                    shouldDespawn = true;
-                }
+                Following = Head;
+            }
+
+            if (Head > 0 && Following > 0 && FollowingNPC.active && HeadNPC.active)
+            {
+                NPC.realLife = Head;
             }
             else
             {
@@ -116,17 +118,23 @@ namespace Revelation.NPCs.BOSS.Raider
             else if(HeadStage == 2)
             {
                 NPC.Opacity = 0.2f;
+                NPC.dontTakeDamage = true;
             }
             else if(HeadStage == 3)
             {
                 NPC.Opacity = 1.0f;
-                if (Main.rand.NextBool(12000))
+                NPC.dontTakeDamage = false;
+                if (Main.rand.NextBool(15000))
                 {
                     foreach (var i in Enumerable.Range(0, 3))
                     {
                         AI_SpawnEgg();
                     }
                 }
+            }
+            else if(HeadStage == 5)
+            {
+                NPC.dontTakeDamage = true;
             }
 
             var delta = FollowingNPC.Center - NPC.Center;
@@ -213,43 +221,35 @@ namespace Revelation.NPCs.BOSS.Raider
             }
         }
 
-        public override void ModifyIncomingHit(ref NPC.HitModifiers modifiers)
-        {
-            if (Vector2.Distance(FollowingNPC.Center, NPC.Center) < NPC.height / 6.0f)
-            {
-                modifiers.SetMaxDamage(1);
-            }
-        }
-
-        public override bool? CanBeHitByItem(Player player, Item item)
-        {
-            if(HeadStage == 2)
-            {
-                return false;
-            }
-            return base.CanBeHitByItem(player, item);
-        }
-
-        public override bool? CanBeHitByProjectile(Projectile projectile)
-        {
-            if (HeadStage == 2)
-            {
-                return false;
-            }
-            return base.CanBeHitByProjectile(projectile);
-        }
-
         public override bool CanHitPlayer(Player target, ref int cooldownSlot)
         {
-            if(HeadStage == 2)
+            if(HeadStage == 2 || HeadStage == 5)
             {
                 return false;
             }
             return base.CanHitPlayer(target, ref cooldownSlot);
         }
 
+        public override void ModifyIncomingHit(ref NPC.HitModifiers modifiers)
+        {
+            modifiers.SetMaxDamage(NPC.life - 1);
+            if (Vector2.Distance(FollowingNPC.Center, NPC.Center) < NPC.height / 6.0f)
+            {
+                modifiers.SetMaxDamage(1);
+            }
+        }
+
         public override bool? DrawHealthBar(byte hbPosition, ref float scale, ref Vector2 position)
         {
+            return false;
+        }
+
+        public override bool CheckDead()
+        {
+            NPC.life = 1;
+            NPC.dontTakeDamage = true;
+            NPC.active = true;
+            NPC.netUpdate = true;
             return false;
         }
     }

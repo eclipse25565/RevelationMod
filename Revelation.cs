@@ -17,10 +17,15 @@ namespace Revelation
 
         public override void Load()
         {
-            Ref<Effect> filterRef =
+            Ref<Effect> filterRef1 =
                 new Ref<Effect>(this.Assets.Request<Effect>(
                     "Effects/Blindness", AssetRequestMode.ImmediateLoad).Value);
-            Filters.Scene["RevelationBlindness"] = new Filter(new ScreenShaderData(filterRef, "Blindness"), EffectPriority.High);
+            Filters.Scene["RevelationBlindness"] = new Filter(new ScreenShaderData(filterRef1, "Blindness"), EffectPriority.High);
+
+            Ref<Effect> filterRef2 =
+                new Ref<Effect>(this.Assets.Request<Effect>(
+                    "Effects/RaiderBlindness", AssetRequestMode.ImmediateLoad).Value);
+            Filters.Scene["RaiderBlindness"] = new Filter(new ScreenShaderData(filterRef2, "Blindness"), EffectPriority.High);
         }
     }
 }

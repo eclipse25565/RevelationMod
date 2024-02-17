@@ -9,18 +9,18 @@ using Microsoft.Xna.Framework;
 using System.IO;
 using Terraria.GameContent.ItemDropRules;
 using Revelation.Items.生物掉落物.BOSS掉落物.衰竭辐射.袭击者;
-using Steamworks;
-using Terraria.GameContent;
-using System.Xml;
 using Revelation.Buff;
+using Terraria.Graphics.Effects;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Revelation.NPCs.BOSS.Raider
 {
     [AutoloadBossHead]
     internal class RaiderHead : ModNPC
     {
-        public static int Life => Main.masterMode ? 25000 : Main.expertMode ? 22500 : 30000;
-        private static int Damage => 80;
+        public static int Life => Main.masterMode ? 6000 : Main.expertMode ? 6000 : 8000;
+        private static int Damage => 36;
+        private static int Defense => 5;
 
         public static int BackgroundMusic => MusicLoader.GetMusicSlot("Revelation/Assets/Music/衰竭辐射boss战1");
 
@@ -31,7 +31,7 @@ namespace Revelation.NPCs.BOSS.Raider
             NPC.height = 30;
             NPC.scale = 2.0f;
             NPC.lifeMax = Life;
-            NPC.defense = 10;
+            NPC.defense = Defense;
             NPC.knockBackResist = 0;
             NPC.damage = Damage;
             NPC.lavaImmune = true;
@@ -80,7 +80,8 @@ namespace Revelation.NPCs.BOSS.Raider
             PreparingRaiding,
             Raiding,
             ReturningToZMoving,
-            Stage4
+            Stage4,
+            Dying
         }
 
         private struct AIData
@@ -157,12 +158,16 @@ namespace Revelation.NPCs.BOSS.Raider
                 case AIState.Stage4:
                     AI_Stage4();
                     break;
+                case AIState.Dying:
+                    AI_Dying();
+                    break;
             }
 
             if(Stage == 3 && NPC.life <= 1000)
             {
                 Stage = 4;
                 ai.state = AIState.Stage4;
+                NPC.netUpdate = true;
             }
 
             NPC.rotation = (float)Math.Atan2((double)NPC.velocity.Y, (double)NPC.velocity.X) + 1.57f;
@@ -234,6 +239,7 @@ namespace Revelation.NPCs.BOSS.Raider
                 Stage = 2;
                 ai.state = AIState.Spectating;
                 NPC.Opacity = 0.2f;
+                NPC.dontTakeDamage = true;
                 AI_SpawnBrother();
                 NPC.netUpdate = true;
             }
@@ -262,6 +268,7 @@ namespace Revelation.NPCs.BOSS.Raider
                 Stage = 3;
                 ai.state = AIState.ZMoving;
                 NPC.Opacity = 1.0f;
+                NPC.dontTakeDamage = true;
                 NPC.netUpdate = true;
             }
             else
@@ -365,7 +372,7 @@ namespace Revelation.NPCs.BOSS.Raider
                 PortalX = center.X;
                 PortalY = center.Y;
                 var expectedPos = TargetPlayer.Center;
-                expectedPos.Y += 700.0f;
+                expectedPos.Y += 1200.0f;
                 var delta = expectedPos - center;
                 var dist = delta.Length();
 
@@ -378,6 +385,7 @@ namespace Revelation.NPCs.BOSS.Raider
                 ai.counter = 0;
                 ai.state = AIState.Raiding;
                 NPC.netUpdate = true;
+                SoundEngine.PlaySound(SoundID.Roar, NPC.Center);
             }
         }
 
@@ -389,24 +397,26 @@ namespace Revelation.NPCs.BOSS.Raider
             var dist = delta.Length();
             var dot = Vector2.Dot(direction, expectedDirection);
             var speed = 20.0f * Stage3SpeedFactor;
-            var omegaMax = 0.09f;
+            var omegaMax = 0.07f;
             if (dot > 0.2f)
             {
-                if (dist > 100.0f)
+                if (dist > 150.0f)
                 {
                     var omega = Math.Clamp(direction.AngleTo(expectedDirection), -omegaMax, omegaMax);
                     NPC.velocity = direction.RotatedBy(omega) * speed;
                 }
-                else if(!ai.spawnedObject)
+                
+                if(!ai.spawnedObject && dist < 300.0f)
                 {
                     ai.spawnedObject = true;
                     if(Main.netMode != NetmodeID.MultiplayerClient)
                     {
+                        var velocity = (TargetPlayer.Center - NPC.Center).SafeNormalize(Vector2.UnitX) * 1.6f;
                         foreach (var i in Enumerable.Range(0, Main.rand.Next(7, 15)))
                         {
-                            var diffuse = Main.rand.NextVector2Circular(368.0f, 368.0f);
-                            var projectile = Projectile.NewProjectileDirect(NPC.GetSource_FromAI(), NPC.Center + diffuse, Vector2.Zero,
-                                ModContent.ProjectileType<RadiationProjectile>(), Damage / 3, 0.0f, -1, NPC.whoAmI);
+                            var diffuse = Main.rand.NextVector2Circular(220.0f, 220.0f);
+                            var projectile = Projectile.NewProjectileDirect(NPC.GetSource_FromAI(), NPC.Center + diffuse, velocity,
+                                ModContent.ProjectileType<RadiationProjectile>(), (int)(Damage * 1.2f), 0.0f, -1, NPC.whoAmI);
                             projectile.netUpdate = true;
                         }
                     }
@@ -436,18 +446,40 @@ namespace Revelation.NPCs.BOSS.Raider
 
         private void AI_Stage4()
         {
-            foreach(var player in Main.player)
+            var dist = Vector2.Distance(Main.LocalPlayer.Center, NPC.Center);
+            if (Main.netMode != NetmodeID.Server && dist <= 2400.0f)
             {
-                if(Vector2.Distance(player.Center, NPC.Center) <= 2400.0f)
-                {
-                    player.AddBuff(ModContent.BuffType<Blindness>(), 300);
-                }
+                // outer 0 -> inner 1
+                var factor = Math.Clamp((2000.0f - dist) / 400.0f, 0.0f, 1.0f);
+                // max 1 -> die 0
+                var progress = 1.0f - factor * Math.Clamp((1000.0f - NPC.life) / 700.0f, 0.0f, 1.0f);
+
+                Filters.Scene.Activate("RaiderBlindness").GetShader().UseProgress(progress);
             }
 
             var expectedDirection = (TargetPlayer.Center - NPC.Center).SafeNormalize(Vector2.UnitX);
             var direction = NPC.velocity.SafeNormalize(Vector2.UnitX);
             var omega = Math.Clamp(direction.AngleTo(expectedDirection), -0.03f, 0.03f);
             NPC.velocity = direction.RotatedBy(omega) * 21.0f;
+        }
+
+        private void AI_Dying()
+        {
+            if (Main.netMode != NetmodeID.Server)
+            {
+                if (ai.counter < 180)
+                {
+                    var progress = ai.counter / 180.0f;
+                    Filters.Scene.Activate("RaiderBlindness").GetShader().UseProgress(progress);
+                }
+                else
+                {
+                    Filters.Scene.Deactivate("RaiderBlindness");
+                    NPC.life = 0;
+                    NPC.checkDead();
+                }
+            }
+            NPC.velocity = NPC.velocity.SafeNormalize(Vector2.UnitX) * 2.0f;
         }
 
         public override void ModifyNPCLoot(NPCLoot npcLoot)
@@ -469,29 +501,38 @@ namespace Revelation.NPCs.BOSS.Raider
 
         public override bool CanHitPlayer(Player target, ref int cooldownSlot)
         {
-            if(Stage == 2)
+            if(Stage == 2 || Stage == 5)
             {
                 return false;
             }
             return base.CanHitPlayer(target, ref cooldownSlot);
         }
 
-        public override bool? CanBeHitByItem(Player player, Item item)
+        public override bool CheckDead()
         {
-            if (Stage == 2)
+            var result = base.CheckDead();
+            if(result)
             {
-                return false;
-            }
-            return base.CanBeHitByItem(player, item);
-        }
+                if(ai.state != AIState.Dying)
+                {
+                    ai.state = AIState.Dying;
+                    ai.counter = 0;
+                    Stage = 5;
+                    NPC.dontTakeDamage = true;
+                    NPC.netUpdate = true;
+                }
 
-        public override bool? CanBeHitByProjectile(Projectile projectile)
-        {
-            if (Stage == 2)
-            {
-                return false;
+                if(ai.state == AIState.Dying && ai.counter > 180)
+                {
+                    return true;
+                }
+                else
+                {
+                    NPC.life = 1;
+                    return false;
+                }
             }
-            return base.CanBeHitByProjectile(projectile);
+            return result;
         }
     }
 }

@@ -34,10 +34,11 @@ namespace Revelation.NPCs.BOSS.Raider
 
         public override void AI()
         {
-            Projectile.velocity = (TargetNPC.Center - Projectile.Center).SafeNormalize(Vector2.UnitX) * 32.0f;
+            Projectile.velocity = (TargetNPC.Center - Projectile.Center).SafeNormalize(Vector2.UnitX) * 26.0f;
             Dust.NewDust(Projectile.Center, 0, 0, DustID.YellowStarDust, 0.0f, 0.0f, 0, new Color(0.1f, 0.9f, 0.2f));
+            Lighting.AddLight(this.Projectile.Center, new Vector3(0.1f, 0.9f, 0.1f) * this.Projectile.Opacity);
 
-            if(!TargetNPC.active)
+            if (!TargetNPC.active)
             {
                 Projectile.Kill();
             }

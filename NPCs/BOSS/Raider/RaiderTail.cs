@@ -5,8 +5,8 @@ namespace Revelation.NPCs.BOSS.Raider
 {
     internal class RaiderTail : RaiderBody
     {
-        protected override int Damage => 40;
-        protected override int Defense => 3;
+        protected override int Damage => 24;
+        protected override int Defense => 0;
 
         public override void SetDefaults()
         {

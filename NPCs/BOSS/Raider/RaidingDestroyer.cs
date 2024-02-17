@@ -11,7 +11,8 @@ namespace Revelation.NPCs.BOSS.Raider
 {
     internal class RaidingDestroyerHead : WormDog
     {
-        private static int Life => 400;
+        private static int Life => 200;
+        private static int Damage => 20;
 
         protected override int BodyType => ModContent.NPCType<RaidingDestroyerBody>();
         private class RaidingDestroyerBody : WormLikeBody
@@ -22,9 +23,9 @@ namespace Revelation.NPCs.BOSS.Raider
                 NPC.width = 15;
                 NPC.height = 14;
                 NPC.scale = 1.5f;
-                NPC.damage = 20;
+                NPC.damage = Damage;
                 NPC.lifeMax = Life;
-                NPC.defense = 10;
+                NPC.defense = 0;
                 NPC.knockBackResist = 0f;
                 NPC.DeathSound = SoundID.NPCDeath1;
                 NPC.HitSound = SoundID.NPCHit1;
@@ -43,9 +44,9 @@ namespace Revelation.NPCs.BOSS.Raider
                 NPC.width = 15;
                 NPC.height = 12;
                 NPC.scale = 1.5f;
-                NPC.damage = 23;
+                NPC.damage = Damage;
                 NPC.lifeMax = Life;
-                NPC.defense = 10;
+                NPC.defense = 0;
                 NPC.knockBackResist = 0f;
                 NPC.DeathSound = SoundID.NPCDeath1;
                 NPC.HitSound = SoundID.NPCHit1;
@@ -68,9 +69,9 @@ namespace Revelation.NPCs.BOSS.Raider
             NPC.width = 15;
             NPC.height = 15;
             NPC.scale = 1.5f;
-            NPC.damage = 35;
+            NPC.damage = Damage;
             NPC.lifeMax = 400;
-            NPC.defense = 5;
+            NPC.defense = 0;
             NPC.knockBackResist = 0f;
             NPC.DeathSound = SoundID.NPCDeath1;
             NPC.HitSound = SoundID.NPCHit1;
