@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using System.Linq;
 using Terraria;
 using Terraria.Audio;
 using Terraria.ID;
@@ -119,6 +120,13 @@ namespace Revelation.NPCs.BOSS.Raider
             else if(HeadStage == 3)
             {
                 NPC.Opacity = 1.0f;
+                if (Main.rand.NextBool(12000))
+                {
+                    foreach (var i in Enumerable.Range(0, 3))
+                    {
+                        AI_SpawnEgg();
+                    }
+                }
             }
 
             var delta = FollowingNPC.Center - NPC.Center;

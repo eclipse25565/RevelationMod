@@ -120,13 +120,13 @@ namespace Revelation.NPCs.BOSS.Raider
 
         public override void AI()
         {
-            if(!NPC.HasValidTarget || Main.player[NPC.target].dead)
+            if (!NPC.HasValidTarget || Main.player[NPC.target].dead)
             {
                 NPC.TargetClosest();
             }
 
             ++ai.counter;
-            switch(ai.state)
+            switch (ai.state)
             {
                 case AIState.Spawned:
                     AI_Spawned();
@@ -195,7 +195,7 @@ namespace Revelation.NPCs.BOSS.Raider
         {
             var delta = TargetPlayer.Center - NPC.Center;
             var dist = delta.Length();
-            if(dist < 700.0f)
+            if (dist < 700.0f)
             {
                 var expectedDirection = -delta.SafeNormalize(Vector2.UnitX);
                 var direction = NPC.velocity.SafeNormalize(Vector2.UnitX);
@@ -217,7 +217,7 @@ namespace Revelation.NPCs.BOSS.Raider
         {
             AI_SurroundPlayer(800.0f, 20.0f, 0.0785f);
 
-            if(NPC.life < NPC.lifeMax / 2)
+            if (NPC.life < NPC.lifeMax / 2)
             {
                 SoundEngine.PlaySound(SoundID.Roar, NPC.Center);
                 Stage = 2;
@@ -234,7 +234,7 @@ namespace Revelation.NPCs.BOSS.Raider
 
         private void AI_SpawnBrother()
         {
-            if(Main.netMode != NetmodeID.MultiplayerClient)
+            if (Main.netMode != NetmodeID.MultiplayerClient)
             {
                 var pos = NPC.Center;
                 crusher = NPC.NewNPC(NPC.GetSource_FromAI(), (int)pos.X, (int)pos.Y, ModContent.NPCType<CrusherHead>());
@@ -246,7 +246,7 @@ namespace Revelation.NPCs.BOSS.Raider
 
         private void AI_Spectating()
         {
-            if(crusher == 0 && devourer == 0)
+            if (crusher == 0 && devourer == 0)
             {
                 Stage = 3;
                 ai.state = AIState.ZMoving;
@@ -255,11 +255,11 @@ namespace Revelation.NPCs.BOSS.Raider
             }
             else
             {
-                if(!CrusherNPC.active || CrusherNPC.life <= 0)
+                if (!CrusherNPC.active || CrusherNPC.life <= 0)
                 {
                     crusher = 0;
                 }
-                if(!DevourerNPC.active || DevourerNPC.life <= 0)
+                if (!DevourerNPC.active || DevourerNPC.life <= 0)
                 {
                     devourer = 0;
                 }
@@ -286,6 +286,20 @@ namespace Revelation.NPCs.BOSS.Raider
             NPC.velocity = direction.RotatedBy(omega) * speed;
         }
 
+        private float Stage3SpeedFactor {
+            get {
+                float result = 1.0f;
+                foreach(var npc in Main.npc)
+                {
+                    if(npc.active && npc.type == ModContent.NPCType<RaidingDestroyerHead>())
+                    {
+                        result += 0.03f;
+                    }
+                }
+                return result;
+            }
+        }
+
         private void AI_ZMoving()
         {
             var delta = TargetPlayer.Center - NPC.Center;
@@ -305,7 +319,7 @@ namespace Revelation.NPCs.BOSS.Raider
             var expectedDirection = tangent.RotatedBy(angle);
             var omegaMax = 0.06f;
             var omega = Math.Clamp(direction.AngleTo(expectedDirection), -omegaMax, omegaMax);
-            var speed = 20.0f;
+            var speed = 20.0f * Stage3SpeedFactor;
 
             if(ai.counter >= 240)
             {
@@ -330,7 +344,7 @@ namespace Revelation.NPCs.BOSS.Raider
             var direction = NPC.velocity.SafeNormalize(Vector2.UnitX);
             if(Vector2.Dot(direction, expectedDiretion) < 0.99f)
             {
-                var speed = 20.0f;
+                var speed = 20.0f * Stage3SpeedFactor;
                 var omega = Math.Clamp(direction.AngleTo(expectedDiretion), -0.05f, 0.05f);
                 NPC.velocity = direction.RotatedBy(omega) * speed;
             }
@@ -363,7 +377,7 @@ namespace Revelation.NPCs.BOSS.Raider
             var expectedDirection = delta.SafeNormalize(Vector2.UnitX);
             var dist = delta.Length();
             var dot = Vector2.Dot(direction, expectedDirection);
-            var speed = 20.0f;
+            var speed = 20.0f * Stage3SpeedFactor;
             var omegaMax = 0.09f;
             if (dot > 0.2f)
             {
