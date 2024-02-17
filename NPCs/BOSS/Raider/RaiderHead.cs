@@ -12,6 +12,7 @@ using Revelation.Items.生物掉落物.BOSS掉落物.衰竭辐射.袭击者;
 using Steamworks;
 using Terraria.GameContent;
 using System.Xml;
+using Revelation.Buff;
 
 namespace Revelation.NPCs.BOSS.Raider
 {
@@ -78,7 +79,8 @@ namespace Revelation.NPCs.BOSS.Raider
             ZMoving,
             PreparingRaiding,
             Raiding,
-            ReturningToZMoving
+            ReturningToZMoving,
+            Stage4
         }
 
         private struct AIData
@@ -152,6 +154,15 @@ namespace Revelation.NPCs.BOSS.Raider
                 case AIState.ReturningToZMoving:
                     AI_ReturningToZMoving();
                     break;
+                case AIState.Stage4:
+                    AI_Stage4();
+                    break;
+            }
+
+            if(Stage == 3 && NPC.life <= 1000)
+            {
+                Stage = 4;
+                ai.state = AIState.Stage4;
             }
 
             NPC.rotation = (float)Math.Atan2((double)NPC.velocity.Y, (double)NPC.velocity.X) + 1.57f;
@@ -421,6 +432,22 @@ namespace Revelation.NPCs.BOSS.Raider
                 ai.state = AIState.ZMoving;
                 NPC.netUpdate = true;
             }
+        }
+
+        private void AI_Stage4()
+        {
+            foreach(var player in Main.player)
+            {
+                if(Vector2.Distance(player.Center, NPC.Center) <= 2400.0f)
+                {
+                    player.AddBuff(ModContent.BuffType<Blindness>(), 300);
+                }
+            }
+
+            var expectedDirection = (TargetPlayer.Center - NPC.Center).SafeNormalize(Vector2.UnitX);
+            var direction = NPC.velocity.SafeNormalize(Vector2.UnitX);
+            var omega = Math.Clamp(direction.AngleTo(expectedDirection), -0.03f, 0.03f);
+            NPC.velocity = direction.RotatedBy(omega) * 21.0f;
         }
 
         public override void ModifyNPCLoot(NPCLoot npcLoot)
