@@ -1,4 +1,5 @@
-﻿using Terraria;
+﻿using Microsoft.Xna.Framework;
+using Terraria;
 
 
 namespace Revelation.NPCs.BOSS.Raider
@@ -21,8 +22,8 @@ namespace Revelation.NPCs.BOSS.Raider
             base.AI();
             if(EnteredPortal)
             {
-                PortalDelta = 0.0f;
-                HeadNPC.netUpdate = true;
+                HeadNPC.PortalDelta = Vector2.Zero;
+                HeadNPC.NPC.netUpdate = true;
             }
         }
     }

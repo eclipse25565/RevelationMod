@@ -46,28 +46,34 @@ namespace Revelation.NPCs.BOSS.Raider
             Music = BackgroundMusic;
         }
 
-        private int Stage
+        public int Stage
         {
             get => (int)NPC.ai[0];
-            set { NPC.ai[0] = value; NPC.netUpdate = true; }
+            private set { NPC.ai[0] = value; NPC.netUpdate = true; }
         }
 
-        private float PortalX
+        public Vector2 Portal
         {
-            get => NPC.ai[1];
-            set => NPC.ai[1] = value;
+            get
+            {
+                return Utils.UnpackVector2(NPC.ai[1]);
+            }
+            private set
+            {
+                NPC.ai[1] = Utils.PackVector2(value);
+            }
         }
 
-        private float PortalY
+        public Vector2 PortalDelta
         {
-            get => NPC.ai[2];
-            set => NPC.ai[2] = value;
-        }
-
-        private float PortalDelta
-        {
-            get => NPC.ai[3];
-            set => NPC.ai[3] = value;
+            get
+            {
+                return Utils.UnpackVector2(NPC.ai[2]);
+            }
+            set
+            {
+                NPC.ai[2] = Utils.PackVector2(value);
+            }
         }
 
         private enum AIState
@@ -245,25 +251,41 @@ namespace Revelation.NPCs.BOSS.Raider
             }
         }
 
-        private int crusher = 0, devourer = 0;
-        private NPC CrusherNPC => Main.npc[crusher];
-        private NPC DevourerNPC => Main.npc[devourer];
+        private int Crusher
+        {
+            get => (int)NPC.ai[3] / (Main.npc.Length + 1);
+            set
+            {
+                NPC.ai[3] = (int)NPC.ai[3] % (Main.npc.Length + 1) + value * (Main.npc.Length + 1);
+            }
+        }
+        private int Devourer
+        {
+            get => (int)NPC.ai[3] % (Main.npc.Length + 1);
+            set
+            {
+                NPC.ai[3] = Crusher * (Main.npc.Length + 1) + value;
+            }
+        }
+        private NPC CrusherNPC => Main.npc[Crusher];
+        private NPC DevourerNPC => Main.npc[Devourer];
 
         private void AI_SpawnBrother()
         {
             if (Main.netMode != NetmodeID.MultiplayerClient)
             {
                 var pos = NPC.Center;
-                crusher = NPC.NewNPC(NPC.GetSource_FromAI(), (int)pos.X, (int)pos.Y, ModContent.NPCType<CrusherHead>());
-                Main.npc[crusher].netUpdate = true;
-                devourer = NPC.NewNPC(NPC.GetSource_FromAI(), (int)pos.X, (int)pos.Y, ModContent.NPCType<DevourerHead>());
-                Main.npc[devourer].netUpdate = true;
+                Crusher = NPC.NewNPC(NPC.GetSource_FromAI(), (int)pos.X, (int)pos.Y, ModContent.NPCType<CrusherHead>());
+                Main.npc[Crusher].netUpdate = true;
+                Devourer = NPC.NewNPC(NPC.GetSource_FromAI(), (int)pos.X, (int)pos.Y, ModContent.NPCType<DevourerHead>());
+                Main.npc[Devourer].netUpdate = true;
+                NPC.netUpdate = true;
             }
         }
 
         private void AI_Spectating()
         {
-            if (crusher == 0 && devourer == 0)
+            if (Crusher == 0 && Devourer == 0)
             {
                 Stage = 3;
                 ai.state = AIState.ZMoving;
@@ -275,11 +297,11 @@ namespace Revelation.NPCs.BOSS.Raider
             {
                 if (!CrusherNPC.active || CrusherNPC.life <= 0)
                 {
-                    crusher = 0;
+                    Crusher = 0;
                 }
                 if (!DevourerNPC.active || DevourerNPC.life <= 0)
                 {
-                    devourer = 0;
+                    Devourer = 0;
                 }
 
                 AI_SurroundPlayer(1000.0f, 30.0f, 0.1f);
@@ -351,7 +373,7 @@ namespace Revelation.NPCs.BOSS.Raider
 
         private void AI_PrepareRaiding()
         {
-            if(PortalDelta != 0.0f)
+            if(PortalDelta.LengthSquared() > 0.01f)
             {
                 ai.state = AIState.ZMoving;
                 ai.counter = 0;
@@ -368,19 +390,14 @@ namespace Revelation.NPCs.BOSS.Raider
             }
             else
             {
-                var center = NPC.Center;
-                PortalX = center.X;
-                PortalY = center.Y;
+                Portal = NPC.Center;
                 var expectedPos = TargetPlayer.Center;
                 expectedPos.Y += 1200.0f;
-                var delta = expectedPos - center;
-                var dist = delta.Length();
+                var delta = expectedPos - Portal;
 
-                // pack the delta
-                var angle = Math.Atan2(delta.Y, delta.X) + Math.PI;
-                PortalDelta = (float)Math.Floor(dist) * 8.0f + (float)angle;
-                
-                NPC.Center = expectedPos;
+                PortalDelta = delta;
+
+                NPC.Center += PortalDelta;
 
                 ai.counter = 0;
                 ai.state = AIState.Raiding;
@@ -459,8 +476,8 @@ namespace Revelation.NPCs.BOSS.Raider
 
             var expectedDirection = (TargetPlayer.Center - NPC.Center).SafeNormalize(Vector2.UnitX);
             var direction = NPC.velocity.SafeNormalize(Vector2.UnitX);
-            var omega = Math.Clamp(direction.AngleTo(expectedDirection), -0.03f, 0.03f);
-            NPC.velocity = direction.RotatedBy(omega) * 21.0f;
+            var omega = Math.Clamp(direction.AngleTo(expectedDirection), -0.08f, 0.08f);
+            NPC.velocity = direction.RotatedBy(omega) * 23.0f;
         }
 
         private void AI_Dying()

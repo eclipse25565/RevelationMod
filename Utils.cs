@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using System;
+using Terraria;
 
 namespace Revelation
 {
@@ -23,6 +24,19 @@ namespace Revelation
         public static float AngleFrom(this Vector2 target, Vector2 origin)
         {
             return AngleTo(origin, target);
+        }
+
+        public static float PackVector2(Vector2 val)
+        {
+            return (float)Math.Floor(val.Length()) * 8.0f + ((float)Math.Atan2(val.Y, val.X) + 4.0f);
+        }
+
+        public static Vector2 UnpackVector2(float val)
+        {
+            var angle = val % 8.0f;
+            var length = (val - angle) / 8.0f;
+            angle -= 4.0f;
+            return Vector2.UnitX.RotatedBy(angle) * length;
         }
     }
 }
