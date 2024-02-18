@@ -244,6 +244,7 @@ namespace Revelation.NPCs.BOSS.Raider
                 SoundEngine.PlaySound(SoundID.Roar, NPC.Center);
                 Stage = 2;
                 ai.state = AIState.Spectating;
+                ai.counter = 0;
                 NPC.Opacity = 0.2f;
                 NPC.dontTakeDamage = true;
                 AI_SpawnBrother();
@@ -274,10 +275,11 @@ namespace Revelation.NPCs.BOSS.Raider
         {
             if (Main.netMode != NetmodeID.MultiplayerClient)
             {
-                var pos = NPC.Center;
-                Crusher = NPC.NewNPC(NPC.GetSource_FromAI(), (int)pos.X, (int)pos.Y, ModContent.NPCType<CrusherHead>());
+                var pos1 = NPC.Center;
+                var pos2 = 2 * TargetPlayer.Center - NPC.Center;
+                Crusher = NPC.NewNPC(NPC.GetSource_FromAI(), (int)pos1.X, (int)pos1.Y, ModContent.NPCType<CrusherHead>());
                 Main.npc[Crusher].netUpdate = true;
-                Devourer = NPC.NewNPC(NPC.GetSource_FromAI(), (int)pos.X, (int)pos.Y, ModContent.NPCType<DevourerHead>());
+                Devourer = NPC.NewNPC(NPC.GetSource_FromAI(), (int)pos2.X, (int)pos2.Y, ModContent.NPCType<DevourerHead>());
                 Main.npc[Devourer].netUpdate = true;
                 NPC.netUpdate = true;
             }
@@ -289,8 +291,9 @@ namespace Revelation.NPCs.BOSS.Raider
             {
                 Stage = 3;
                 ai.state = AIState.ZMoving;
+                ai.counter = 120;
                 NPC.Opacity = 1.0f;
-                NPC.dontTakeDamage = true;
+                NPC.dontTakeDamage = false;
                 NPC.netUpdate = true;
             }
             else

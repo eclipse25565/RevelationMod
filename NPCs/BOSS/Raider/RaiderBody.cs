@@ -61,7 +61,7 @@ namespace Revelation.NPCs.BOSS.Raider
             }
 
             bool shouldDespawn = false;
-            if(Head > 0 && HeadNPC.NPC.active && HeadNPC.Stage == 5)
+            if(Head > 0 && HeadNPC.NPC.active && HeadNPC.Stage == 5 && Following > 0 && !FollowingNPC.active)
             {
                 Following = Head;
             }
@@ -138,19 +138,26 @@ namespace Revelation.NPCs.BOSS.Raider
                 }
             }
 
-            var delta = FollowingNPC.Center - NPC.Center;
-            var dist = delta.Length();
-            var expectedDist = (NPC.height + FollowingNPC.height) * 0.5f;
-
             if (toFollow)
             {
-                if(EnteredPortal && HeadNPC.PortalDelta.LengthSquared() < 0.01f)
+                var delta = FollowingNPC.Center - NPC.Center;
+                var dist = delta.Length();
+                var expectedDist = (NPC.height + FollowingNPC.height) * 0.5f;
+                if (EnteredPortal && HeadNPC.PortalDelta.LengthSquared() < 0.01f)
                 {
                     EnteredPortal = false;
                     NPC.netUpdate = true;
                 }
 
-                float speed = Math.Clamp(dist - expectedDist, 0.0f, FollowingNPC.velocity.Length());
+                float speed;
+                if (HeadNPC.Stage == 5)
+                {
+                    speed = FollowingNPC.velocity.Length();
+                }
+                else
+                {
+                    speed = Math.Max(dist - expectedDist, 0.0f);
+                }
                 NPC.velocity = speed * delta.SafeNormalize(Vector2.UnitX);
             }
             NPC.rotation = (float)Math.Atan2((double)NPC.velocity.Y, (double)NPC.velocity.X) + 1.57f;
