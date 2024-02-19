@@ -611,8 +611,8 @@ Buffs: {
 	}
 
 	Blindness: {
-		// DisplayName: Blindness
-		// Description: Mods.Revelation.Buffs.Blindness.Description
+		DisplayName: 失明
+		Description: 你什么也看不见了！
 	}
 }
 
@@ -629,10 +629,9 @@ Projectiles: {
 	// 迷你鲨子弹.DisplayName: 迷你鲨子弹
 	// 迷你鲨弹幕.DisplayName: 迷你鲨弹幕
 	// 裂痕之火.DisplayName: 裂痕之火
-	// RaiderProjectile.DisplayName: Raider Projectile
-	// PoisonDart.DisplayName: Poison Dart
-	// RadiationProjectile.DisplayName: Radiation Projectile
-	// RadiationHealth.DisplayName: Radiation Health
+	PoisonDart.DisplayName: 毒飞镖
+	RadiationProjectile.DisplayName: 辐射
+	RadiationHealth.DisplayName: 辐射生命
 }
 
 NPCs: {
@@ -649,27 +648,17 @@ NPCs: {
 	// 破坏者3.DisplayName: 破坏者3
 	// 裂隙之眼.DisplayName: 裂隙之眼
 	// 裂隙之眼图标.DisplayName: 裂隙之眼图标
-	// 袭击者2体.DisplayName: 袭击者2体
-	// 袭击者2头.DisplayName: 袭击者2头
-	// 袭击者2尾.DisplayName: 袭击者2尾
-	RaiderBody.DisplayName: 袭击虫
-	RaiderHead.DisplayName: 袭击虫
-	RaiderTail.DisplayName: 袭击虫
-	// RaideringDestroyerHead.DisplayName: Raidering Destroyer Head
-	// RaideringDestroyerBody.DisplayName: Raidering Destroyer Body
-	// RaideringDestroyerTail.DisplayName: Raidering Destroyer Tail
-	RaidingDestroyerHead.DisplayName: 破坏虫
-	RaidingDestroyerBody.DisplayName: 破坏虫
-	RaidingDestroyerTail.DisplayName: 破坏虫
-	// BugEgg.DisplayName: Bug Egg
-	// BugEggOnGround.DisplayName: Bug Egg On Ground
-	// CrusherHead.DisplayName: Crusher Head
-	// CrusherBody.DisplayName: Crusher Body
-	// CrusherTail.DisplayName: Crusher Tail
-	// SwallowerHead.DisplayName: Swallower Head
-	// SwallowerBody.DisplayName: Swallower Body
-	// SwallowerTail.DisplayName: Swallower Tail
-	// DevourerHead.DisplayName: Devourer Head
-	// DevourerBody.DisplayName: Devourer Body
-	// DevourerTail.DisplayName: Devourer Tail
+	RaiderBody.DisplayName: 袭击者
+	RaiderHead.DisplayName: 袭击者
+	RaiderTail.DisplayName: 袭击者
+	RaidingDestroyerHead.DisplayName: 破坏者
+	RaidingDestroyerBody.DisplayName: 破坏者
+	RaidingDestroyerTail.DisplayName: 破坏者
+	BugEgg.DisplayName: 虫卵
+	CrusherHead.DisplayName: 碾碎者
+	CrusherBody.DisplayName: 碾碎者
+	CrusherTail.DisplayName: 碾碎者
+	DevourerHead.DisplayName: 噬食者
+	DevourerBody.DisplayName: 噬食者
+	DevourerTail.DisplayName: 噬食者
 }
