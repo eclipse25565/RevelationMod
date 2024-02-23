@@ -1,5 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
-using Revelation.Properties;
+using Revelation.Projectiles;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;

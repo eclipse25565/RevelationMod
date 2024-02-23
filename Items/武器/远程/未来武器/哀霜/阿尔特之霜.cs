@@ -8,7 +8,7 @@ using Terraria.ModLoader;
 using Terraria.Localization;
 using Revelation.Items.材料.哀霜;
 using Revelation.Tiles.建筑;
-using Revelation.Properties.武器弹幕.哀霜;
+using Revelation.Projectiles.武器弹幕.哀霜;
 
 namespace Revelation.Items.武器.远程.未来武器.哀霜
 {
