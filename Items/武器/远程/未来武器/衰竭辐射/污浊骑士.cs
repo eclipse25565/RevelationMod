@@ -6,7 +6,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Revelation.Tiles.建筑;
 using Revelation.Items.生物掉落物.普通怪物.衰竭辐射;
-using Revelation.Properties.武器弹幕.衰竭辐射;
+using Revelation.Projectiles.武器弹幕.衰竭辐射;
 using Terraria.DataStructures;
 
 namespace Revelation.Items.武器.远程.未来武器.衰竭辐射
