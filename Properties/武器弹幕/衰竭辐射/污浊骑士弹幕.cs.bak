@@ -7,9 +7,9 @@ using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 
-namespace Revelation.Properties.武器弹幕.哀霜
+namespace Revelation.Properties.武器弹幕.衰竭辐射
 {
-	public class 阿尔特之霜弹幕 : ModProjectile
+	public class 污浊骑士弹幕 : ModProjectile
 	{
 		public override void SetStaticDefaults() {
 			ProjectileID.Sets.TrailCacheLength[Projectile.type] = 5; // 射弹的途径位置记录数量（用于实现残影效果）
@@ -17,18 +17,18 @@ namespace Revelation.Properties.武器弹幕.哀霜
 		}
 
 		public override void SetDefaults() {
-			Projectile.width = 8; // 该射弹碰撞箱的宽度
-			Projectile.height = 8; // 该射弹碰撞箱的高度
+			Projectile.width = 10; // 该射弹碰撞箱的宽度
+			Projectile.height = 10; // 该射弹碰撞箱的高度
 			Projectile.aiStyle = 1; // 射弹的ai类型，该数值需要参考泰拉瑞亚代码，1为常规子弹
 			Projectile.friendly = true; //true会对敌怪造成伤害，false不会
 			Projectile.hostile = false; // true会对玩家造成伤害，false不会
 			Projectile.DamageType = DamageClass.Ranged; // 射弹的伤害类型，这里为远程伤害
 			Projectile.penetrate = 1; // 射弹的穿透数量 (OnTileCollide 为true时命中物块反弹也会减少一次穿透数量)
-			Projectile.timeLeft = 120; // 射弹存在的剩余时间，写在这里为射弹的最大存在时间 (60 为 1 秒, 这里是 10 秒)
+			Projectile.timeLeft = 240; // 射弹存在的剩余时间，写在这里为射弹的最大存在时间 (60 为 1 秒, 这里是 10 秒)
 			Projectile.alpha = 0 ; // 射弹的透明度，255为完全透明，因为我们上面用来 aiStyle 为1，其中的一项特性就是自动淡入子弹，
 									// 既子弹会由透明转为不透明（255→0），如果你没有使用 aiStyle = 1，那这里应该为 0 来使射弹完全不透明
 									// 你也可以在 ai 中不断改变该值来改变射弹的透明度，但除非你确实想让射弹完全不可见，最好别让该值长时间停留在255
-			Projectile.light = 2f; // 射弹发光亮度
+			Projectile.light = 4f; // 射弹发光亮度
 			Projectile.ignoreWater = true; // true射弹入水不会改变速度，false会
 			Projectile.tileCollide = true; // true能在命中物块后进行反弹，false不能
 			Projectile.extraUpdates = 1; // 额外更新数量，如果你希望射弹在1帧中多次更新状态，这里要大于0
@@ -77,7 +77,7 @@ namespace Revelation.Properties.武器弹幕.哀霜
 			return true;
 		}
 
-		public override void OnKill(int timeLeft) {
+		public override void Kill(int timeLeft) {
 			// 这块的代码和上面 OnTileCollide 的代码都会让射弹在命中物块时出现一些物块颜色的粒子效果
 			// SoundID.Item10 是反弹的声音
 			Collision.HitTiles(Projectile.position + Projectile.velocity, Projectile.velocity, Projectile.width, Projectile.height);

@@ -77,7 +77,7 @@ namespace Revelation.Properties.武器弹幕.衰竭辐射
 			return true;
 		}
 
-		public override void Kill(int timeLeft) {
+		public override void OnKill(int timeLeft) {
 			// 这块的代码和上面 OnTileCollide 的代码都会让射弹在命中物块时出现一些物块颜色的粒子效果
 			// SoundID.Item10 是反弹的声音
 			Collision.HitTiles(Projectile.position + Projectile.velocity, Projectile.velocity, Projectile.width, Projectile.height);
