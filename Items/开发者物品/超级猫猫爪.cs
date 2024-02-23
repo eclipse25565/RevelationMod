@@ -3,7 +3,7 @@ using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.DataStructures;
 using Microsoft.Xna.Framework;
-using Revelation.Properties.开发者弹幕;
+using Revelation.Projectiles.开发者弹幕;
 
 namespace Revelation.Items.开发者物品
 {

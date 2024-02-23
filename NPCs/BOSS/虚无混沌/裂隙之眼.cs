@@ -1,3 +1,4 @@
+﻿using Revelation.Common.Systems;
 using Terraria;
 using System;
 using Terraria.ID;
@@ -10,9 +11,50 @@ using Terraria.Audio;
 
 namespace Revelation.NPCs.BOSS.虚无混沌
 {				
-	[AutoloadBossHead]
+	[AutoloadBossHead]//地图图标
 	public class 裂隙之眼 : ModNPC
 	{
+		public static int secondStageHeadSlot = -1;
+		public bool SecondStage {
+			get => NPC.ai[0] == 1f;
+			set => NPC.ai[0] = value ? 1f : 0f;
+		}
+		public Vector2 FirstStageDestination {
+			get => new Vector2(NPC.ai[1], NPC.ai[2]);
+			set {
+				NPC.ai[1] = value.X;
+				NPC.ai[2] = value.Y;
+			}
+		}
+        		public bool SpawnedMinions {
+			get => NPC.localAI[0] == 1f;
+			set => NPC.localAI[0] = value ? 1f : 0f;
+		}
+        private const int FirstStageTimerMax = 90;
+        public ref float FirstStageTimer => ref NPC.localAI[1];
+		public ref float RemainingShields => ref NPC.localAI[2];
+        public ref float SecondStageTimer_SpawnEyes => ref NPC.localAI[3];
+        public Vector2 LastFirstStageDestination { get; set; } = Vector2.Zero;
+        public static int MinionCount() {
+			int count = 15;
+
+			if (Main.expertMode) {
+				count += 5; 
+			}
+			return count;
+		}
+        //boss头像2
+		public override void Load() {
+			string texture = BossHeadTexture + "_2"; 
+			secondStageHeadSlot = Mod.AddBossHeadTexture(texture, -1); 
+		}
+        		public override void BossHeadSlot(ref int index) {
+			int slot = secondStageHeadSlot;
+			if (SecondStage && slot != -1) {
+				index = slot;
+			}
+		}
+
         private int x;
         private int ccs;
         private float i;
@@ -20,7 +62,16 @@ namespace Revelation.NPCs.BOSS.虚无混沌
         public override void SetStaticDefaults()
 		{
 			Main.npcFrameCount[NPC.type] = Main.npcFrameCount[NPCID.BoundGoblin];
+            NPCID.Sets.MPAllowedEnemies[Type] = true;
+            NPCID.Sets.BossBestiaryPriority.Add(Type);
+            NPCID.Sets.NPCBestiaryDrawModifiers drawModifiers = new NPCID.Sets.NPCBestiaryDrawModifiers(0) {
+				CustomTexturePath = "Revelation/NPCs/BOSS/虚无混沌/裂隙之眼_图鉴",
+				PortraitScale = 0.6f, 
+				PortraitPositionYOverride = 0f,
+			};
+			NPCID.Sets.NPCBestiaryDrawOffset.Add(Type, drawModifiers);
 		}
+
 
 		public override void SetDefaults()
 		{
@@ -39,8 +90,78 @@ namespace Revelation.NPCs.BOSS.虚无混沌
 			AnimationType = NPCID.BoundGoblin;
 			NPC.boss = true;
 			Music = MusicLoader.GetMusicSlot("Revelation/Assets/Music/虚无混沌boss战1");
+            NPC.npcSlots = 10f;
+            NPC.aiStyle = -1;
 		}
+		public override void ModifyNPCLoot(NPCLoot npcLoot) {
+			npcLoot.Add(ItemDropRule.BossBag(ModContent.ItemType<袭击者令牌>()));
+			//npcLoot.Add(ItemDropRule.Common(ModContent.ItemType<纪念章>(), 10));
+			//npcLoot.Add(ItemDropRule.MasterModeCommonDrop(ModContent.ItemType<圣物>()));
+			//npcLoot.Add(ItemDropRule.MasterModeDropOnAllPlayers(ModContent.ItemType<宠物>(), 4));
+			LeadingConditionRule notExpertRule = new LeadingConditionRule(new Conditions.NotExpert());
+			//notExpertRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<面具>(), 7));
+            notExpertRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<辐射组织>(), 1, 20, 35));
+            notExpertRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<辐射心脏>(), 2, 1, 1));
+            notExpertRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<辐射利齿>(), 1, 1, 3));
+            npcLoot.Add(notExpertRule);
+        }
+        public override void OnKill() {
 
+			NPC.SetEventFlagCleared(ref DownedBossSystem.downedMinionBoss, -1);
+            Main.NewText("[c/9370DB:你以为战胜的是我，其实黑暗悄然无息...]");
+		}
+        public override void BossLoot(ref string name, ref int potionType) 
+        {
+
+        }   
+        public override bool CanHitPlayer(Player target, ref int cooldownSlot) {
+			cooldownSlot = ImmunityCooldownID.Bosses; 
+			return true;
+		} 
+        public override void FindFrame(int frameHeight) {
+			int startFrame = 0;
+			int finalFrame = 6;
+
+			if (SecondStage) {
+				startFrame = 7;
+				finalFrame = Main.npcFrameCount[NPC.type] - 1;
+
+				if (NPC.frame.Y < startFrame * frameHeight) {
+					NPC.frame.Y = startFrame * frameHeight;
+				}
+			}
+
+			int frameSpeed = 5;
+			NPC.frameCounter += 0.5f;
+			NPC.frameCounter += NPC.velocity.Length() / 10f; 
+			if (NPC.frameCounter > frameSpeed) {
+				NPC.frameCounter = 0;
+				NPC.frame.Y += frameHeight;
+
+				if (NPC.frame.Y > finalFrame * frameHeight) {
+					NPC.frame.Y = startFrame * frameHeight;
+				}
+			}
+		}
+        public override void HitEffect(NPC.HitInfo hit) {
+			if (Main.netMode == NetmodeID.Server) {
+				return;
+			}
+
+			if (NPC.life <= 0) {
+				int backGoreType = Mod.Find<ModGore>("尸块1").Type;
+				int frontGoreType = Mod.Find<ModGore>("尸块2").Type;
+
+				var entitySource = NPC.GetSource_Death();
+
+				for (int i = 0; i < 2; i++) {
+					Gore.NewGore(entitySource, NPC.position, new Vector2(Main.rand.Next(-6, 7), Main.rand.Next(-6, 7)), backGoreType);
+					Gore.NewGore(entitySource, NPC.position, new Vector2(Main.rand.Next(-6, 7), Main.rand.Next(-6, 7)), frontGoreType);
+				}
+
+				SoundEngine.PlaySound(SoundID.Roar, NPC.Center);
+			}
+		}
         public override void AI()
         {
             Player player = Main.player[NPC.target];
@@ -286,25 +407,6 @@ namespace Revelation.NPCs.BOSS.虚无混沌
 			int tile = (int)Main.tile[x, y].TileType;
 			return (tile == 367) && spawnInfo.SpawnTileX > Main.rockLayer && NPC.downedBoss2 ? 0.07f : 0f;
 		}
-
-		        public override void ModifyNPCLoot(NPCLoot npcLoot)
-        {
-            LeadingConditionRule notExpertRule = new LeadingConditionRule(new Conditions.NotExpert()); //创建一个掉落规则，在非专家大师模式时掉落
-            notExpertRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<辐射组织>(), 1, 20, 35));
-            notExpertRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<辐射心脏>(), 2, 1, 1));
-            notExpertRule.OnSuccess(ItemDropRule.Common(ModContent.ItemType<辐射利齿>(), 1, 1, 3));//向这个掉落规则里放一个掉落，1/3概率掉落，一次掉落5~15个石头
-			npcLoot.Add(notExpertRule);
-            //npcLoot.Add(ItemDropRule.BossBag(ModContent.ItemType<袭击者宝藏袋>())); //向总掉落里放一个石头，这个石头以宝藏袋的标准掉落出来（只在专家大师掉落）
-            npcLoot.Add(ItemDropRule.MasterModeCommonDrop(ModContent.ItemType<袭击者令牌>())); //在大师模式下掉落一个石头
-            npcLoot.Add(ItemDropRule.MasterModeDropOnAllPlayers(ModContent.ItemType<袭击者令牌>()));//在大师模式下，给所有玩家，都掉落一个石头，人人有份，每个人在自己的客户端都有一个
-        }
-				        public override void OnKill()
-        {       
-
-			
-                Main.NewText("[c/9370DB:你以为战胜的是我，其实黑暗悄然无息...]");
-            }
-
 	}
 }
   #endregion
