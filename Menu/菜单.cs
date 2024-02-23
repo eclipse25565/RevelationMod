@@ -47,7 +47,7 @@ namespace Revelation.Menu
         public override Asset<Texture2D> MoonTexture => ModContent.Request<Texture2D>("Revelation/Menu/空洞像素");
 
 	    public override ModSurfaceBackgroundStyle MenuBackgroundStyle => ModContent.GetInstance<NullSurfaceBackground>();
-        public override void OnSelected() 
+        public override void OnSelected()
         {
 			Terraria.Audio.SoundEngine.PlaySound(Terraria.ID.SoundID.Zombie93); // 选择了这个ModMenu之后播放一个打雷音效
 		}
